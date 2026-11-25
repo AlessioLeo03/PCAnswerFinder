@@ -3,7 +3,8 @@ r"""Video di anteprima (MP4, 1280x720, 30 fps) per presentare PCAnswerFinder.
 Usa lo strato vero del programma (Schermata e Barra) sopra un desktop di esempio disegnato qui:
 niente registrazione dello schermo, niente dati personali. Codifica con QtMultimedia (FFmpeg di Qt).
 
-Uso:  .\.venv\Scripts\python pacchetto\video_anteprima.py [dist\PCAnswerFinder-anteprima.mp4]
+Uso:  .\.venv\Scripts\python pacchetto\video_anteprima.py [--scena grafico|codice] [--uscita file.mp4]
+           [--campioni cartella] [--passo 30]
 """
 import math
 import sys
@@ -34,8 +35,18 @@ from cerchia.cattura import Foto  # noqa: E402
 from cerchia.schermata import Schermata  # noqa: E402
 
 L, A, FPS = 1280, 720, 30
-# cartella dove salvare un fotogramma al secondo, per controllare il video senza aprirlo
-CAMPIONI = Path(sys.argv[2]) if len(sys.argv) > 2 else None
+
+
+def _opzione(nome: str, predefinito: str | None = None) -> str | None:
+    if nome in sys.argv[1:-1]:
+        return sys.argv[sys.argv.index(nome) + 1]
+    return predefinito
+
+
+SCENA = _opzione("--scena", "grafico")
+# cartella dove salvare un fotogramma ogni PASSO, per controllare il video senza aprirlo
+CAMPIONI = Path(_opzione("--campioni")) if _opzione("--campioni") else None
+PASSO = int(_opzione("--passo", "30"))
 ARANCIO = QColor(217, 119, 87)
 MONO = QFont("Cascadia Mono", 11)
 if not MONO.exactMatch():
@@ -64,7 +75,7 @@ ERRORE = [
 ]
 
 
-def desktop() -> QImage:
+def desktop_codice() -> QImage:
     img = QImage(L, A, QImage.Format_RGB32)
     p = QPainter(img)
     p.setRenderHint(QPainter.Antialiasing)
@@ -132,16 +143,124 @@ def desktop() -> QImage:
     return img
 
 
-ZONA_ERRORE = QRectF(250, 352, 480, 150)  # attorno al traceback
+def desktop_grafico() -> QImage:
+    """Presentazione aperta su una slide con un grafico a barre (un'immagine, non testo da copiare)."""
+    img = QImage(L, A, QImage.Format_RGB32)
+    p = QPainter(img)
+    p.setRenderHint(QPainter.Antialiasing)
+    g = QLinearGradient(0, 0, L, A)
+    g.setColorAt(0, QColor(60, 44, 96))
+    g.setColorAt(1, QColor(24, 22, 44))
+    p.fillRect(img.rect(), g)
+    f = QRectF(70, 28, L - 140, 490)
+    p.setPen(Qt.NoPen)
+    p.setBrush(QColor(243, 243, 245))
+    p.drawRoundedRect(f, 10, 10)
+    p.setBrush(QColor(196, 72, 44))
+    p.drawRoundedRect(QRectF(f.x(), f.y(), f.width(), 34), 10, 10)
+    p.drawRect(QRectF(f.x(), f.y() + 20, f.width(), 14))
+    p.setPen(QColor("white"))
+    p.setFont(UI)
+    p.drawText(QRectF(f.x(), f.y(), f.width(), 34), Qt.AlignCenter, "Riunione trimestrale.pptx — Presentazione")
+    # miniature delle slide
+    p.fillRect(QRectF(f.x(), f.y() + 34, 170, f.height() - 34), QColor(228, 228, 232))
+    for i in range(4):
+        r = QRectF(f.x() + 22, f.y() + 52 + i * 104, 126, 72)
+        p.setPen(QPen(QColor(196, 72, 44), 2) if i == 2 else QPen(QColor(200, 200, 205), 1))
+        p.setBrush(QColor("white"))
+        p.drawRoundedRect(r, 3, 3)
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(210, 210, 215))
+        p.drawRect(QRectF(r.x() + 10, r.y() + 10, 70, 6))
+        if i == 2:
+            for j, h in enumerate((20, 30, 26, 40)):
+                p.setBrush(QColor(196, 72, 44, 160))
+                p.drawRect(QRectF(r.x() + 20 + j * 22, r.bottom() - 10 - h, 12, h))
+    # slide
+    s = QRectF(f.x() + 210, f.y() + 60, f.width() - 250, f.height() - 90)
+    p.setPen(Qt.NoPen)
+    p.setBrush(QColor(0, 0, 0, 25))
+    p.drawRect(s.translated(3, 4))
+    p.setBrush(QColor("white"))
+    p.drawRect(s)
+    p.setPen(QColor(40, 40, 46))
+    p.setFont(QFont("Segoe UI Semibold", 20))
+    p.drawText(QPointF(s.x() + 36, s.y() + 50), "Vendite per area · 2026")
+    p.setPen(QColor(120, 120, 128))
+    p.setFont(QFont("Segoe UI", 11))
+    p.drawText(QPointF(s.x() + 36, s.y() + 76), "migliaia di euro, per trimestre")
+    # grafico a barre raggruppate
+    gr = ZONE["grafico"].adjusted(30, 20, -30, -34)
+    serie = [("Nord", QColor(196, 72, 44)), ("Centro", QColor(232, 150, 90)), ("Sud", QColor(90, 120, 170))]
+    valori = [(120, 80, 60), (135, 85, 58), (150, 70, 64), (190, 92, 75)]
+    massimo = 200
+    p.setPen(QPen(QColor(225, 225, 230), 1))
+    for k in range(5):
+        y = gr.bottom() - gr.height() * k / 4
+        p.drawLine(QPointF(gr.x(), y), QPointF(gr.right(), y))
+    p.setPen(QColor(140, 140, 148))
+    p.setFont(QFont("Segoe UI", 9))
+    larghezza_gruppo = gr.width() / len(valori)
+    for i, gruppo in enumerate(valori):
+        for j, v in enumerate(gruppo):
+            h = gr.height() * v / massimo
+            x = gr.x() + i * larghezza_gruppo + 22 + j * 30
+            p.setPen(Qt.NoPen)
+            p.setBrush(serie[j][1])
+            p.drawRoundedRect(QRectF(x, gr.bottom() - h, 24, h), 3, 3)
+        p.setPen(QColor(110, 110, 118))
+        p.drawText(QRectF(gr.x() + i * larghezza_gruppo, gr.bottom() + 6, larghezza_gruppo, 18), Qt.AlignCenter,
+                   f"T{i + 1}")
+    for j, (nome, colore) in enumerate(serie):
+        x = gr.right() - 230 + j * 80
+        p.setPen(Qt.NoPen)
+        p.setBrush(colore)
+        p.drawRoundedRect(QRectF(x, gr.y() - 26, 12, 12), 2, 2)
+        p.setPen(QColor(90, 90, 98))
+        p.drawText(QPointF(x + 18, gr.y() - 15), nome)
+    # riquadri con i numeri chiave a destra del grafico
+    for k, (etichetta, numero) in enumerate((("Totale anno", "1.179 k€"), ("Area migliore", "Nord"),
+                                             ("Trimestre migliore", "T4"))):
+        r = QRectF(940, 170 + k * 96, 180, 80)
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(247, 240, 236))
+        p.drawRoundedRect(r, 8, 8)
+        p.setPen(QColor(120, 120, 128))
+        p.setFont(QFont("Segoe UI", 10))
+        p.drawText(QPointF(r.x() + 16, r.y() + 28), etichetta)
+        p.setPen(QColor(196, 72, 44))
+        p.setFont(QFont("Segoe UI Semibold", 18))
+        p.drawText(QPointF(r.x() + 16, r.y() + 62), numero)
+    # barra delle applicazioni
+    p.fillRect(QRectF(0, A - 48, L, 48), QColor(28, 30, 36, 245))
+    for i in range(5):
+        p.setBrush(QColor(255, 255, 255, 40 if i else 90))
+        p.setPen(Qt.NoPen)
+        p.drawRoundedRect(QRectF(L / 2 - 120 + i * 50, A - 40, 34, 34), 7, 7)
+    p.end()
+    return img
+
+
+# zona da cerchiare per ogni scena
+ZONE = {
+    "codice": QRectF(250, 352, 480, 150),   # attorno al traceback
+    "grafico": QRectF(330, 160, 560, 300),  # attorno al grafico
+}
+DESKTOP = {"codice": desktop_codice, "grafico": desktop_grafico}
+DOMANDE = {
+    "codice": "Perché esce questo errore e come lo risolvo?",
+    "grafico": "Riassumimi questo grafico in 3 punti",
+}
+ZONA = ZONE[SCENA]
 
 
 def punto_cerchio(t: float) -> tuple[float, float]:
-    """Tratto a mano libera attorno all'errore: ellisse un po' irregolare che si chiude oltre l'inizio."""
-    c = ZONA_ERRORE.center()
+    """Tratto a mano libera attorno alla zona: ellisse un po' irregolare che si chiude oltre l'inizio."""
+    c = ZONA.center()
     ang = -math.pi * 0.95 + t * math.tau * 1.06
     tremolio = 1 + 0.03 * math.sin(t * 23)
-    return (c.x() + ZONA_ERRORE.width() / 2 * math.cos(ang) * tremolio,
-            c.y() + ZONA_ERRORE.height() / 2 * math.sin(ang) * tremolio)
+    return (c.x() + ZONA.width() / 2 * math.cos(ang) * tremolio,
+            c.y() + ZONA.height() / 2 * math.sin(ang) * tremolio)
 
 
 def cursore(p: QPainter, x: float, y: float, premuto: bool = False) -> None:
@@ -225,7 +344,7 @@ def interpola(a, b, t):
 
 def fotogrammi():
     """Genera i fotogrammi uno alla volta (QImage 1280x720)."""
-    base = desktop()
+    base = DESKTOP[SCENA]()
     s = Schermata(Foto(QGuiApplication.primaryScreen(), base, (0, 0), 1.0), lambda x, y: None)
     s.setAttribute(Qt.WA_DontShowOnScreen)
     s.resize(L, A)
@@ -265,6 +384,9 @@ def fotogrammi():
     s._imposta_luce(-1.0)
     # 3) suggerimento d'uso
     s._mostra_suggerimento()
+    # l'animazione vera andrebbe a tempo reale e litigherebbe con l'opacità impostata qui fotogramma per fotogramma
+    s._anim_sugg.stop()
+    s._anim_sugg.valueChanged.disconnect()
     for i in range(30):
         s._opacita.setOpacity(min(1.0, i / 8))
         # qui parla il suggerimento del programma: niente didascalia sopra
@@ -284,7 +406,7 @@ def fotogrammi():
     for i in range(18):
         yield con(strato(), fine_cerchio, 2, "Cerchia quello che ti serve")
     # 5) domanda
-    domanda = "Perché esce questo errore e come lo risolvo?"
+    domanda = DOMANDE[SCENA]
     campo = s._barra.campo
     pos_campo = campo.mapTo(s, campo.rect().center())
     verso_campo = (pos_campo.x() - 60, pos_campo.y() + 8)
@@ -317,7 +439,7 @@ def fotogrammi():
 
 
 def main() -> None:
-    uscita = Path(sys.argv[1] if len(sys.argv) > 1 else RADICE / "dist" / "PCAnswerFinder-anteprima.mp4").resolve()
+    uscita = Path(_opzione("--uscita") or RADICE / "dist" / f"PCAnswerFinder-anteprima-{SCENA}.mp4").resolve()
     uscita.parent.mkdir(parents=True, exist_ok=True)
     if uscita.exists():
         uscita.unlink()
@@ -360,7 +482,7 @@ def main() -> None:
                     stato["finito"] = True
                     registratore.stop()
                     return
-                if CAMPIONI and stato["n"] % 30 == 0:
+                if CAMPIONI and stato["n"] % PASSO == 0:
                     img.save(str(CAMPIONI / f"f{stato['n']:04d}.png"))
             frame = QVideoFrame(img)
             frame.setStartTime(stato["n"] * 1_000_000 // FPS)
