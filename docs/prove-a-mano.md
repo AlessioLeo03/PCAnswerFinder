@@ -26,6 +26,8 @@ Avvio: `.\.venv\Scripts\pythonw avvia.pyw` (oppure da "Avvia con Windows").
 - [ ] Menu "Cerca chat…" con un titolo esistente → si apre quella chat e riceve la selezione.
 - [ ] "Cerca chat…" con titolo vuoto → "Scrivi il titolo della chat", nessun invio.
 - [ ] La scelta del menu e il titolo restano uguali alla volta successiva.
+- [ ] Nel menu, scrivendo nel titolo compaiono le chat cercate in passato più attinenti; un clic la sceglie.
+- [ ] Dopo l'onda di luce compare in alto "Cerchia, evidenzia o tocca qualcosa…"; sparisce al primo clic.
 - [ ] Appunti ripristinati dopo l'invio.
 - [ ] App di Claude chiusa → si apre e riceve la selezione.
 

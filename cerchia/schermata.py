@@ -4,7 +4,7 @@ from math import hypot
 
 from PySide6.QtCore import QEasingCurve, QObject, QPointF, QRectF, Qt, QVariantAnimation, Signal
 from PySide6.QtGui import QColor, QCursor, QLinearGradient, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QLabel, QWidget
+from PySide6.QtWidgets import QGraphicsOpacityEffect, QLabel, QWidget
 
 from cerchia import destinazione, gesti
 from cerchia.barra import Barra
@@ -23,8 +23,12 @@ RAGGIO_MANIGLIA = 24
 MSG_OCR_ASSENTE = "Testo non disponibile: in Windows manca la lingua per il riconoscimento del testo."
 MSG_NESSUN_ELEMENTO = "Nessun elemento qui, prova a cerchiare."
 MSG_TITOLO_VUOTO = "Scrivi il titolo della chat"
+TESTO_SUGGERIMENTO = ("<span style='color:#D97757'>✳</span>&nbsp; <b>Cerchia</b>, evidenzia o tocca qualcosa "
+                      "per chiedere a Claude &nbsp;<span style='color:rgba(255,255,255,140)'>· Esc per uscire</span>")
 
 STILE = """
+QLabel#suggerimento { background: rgba(32, 33, 36, 235); color: white; border: 1px solid rgba(255, 255, 255, 28);
+                      border-radius: 20px; padding: 10px 20px; font-size: 15px; }
 QLabel#avviso { background: rgba(32, 33, 36, 235); color: white; border-radius: 14px;
                 padding: 8px 14px; font-size: 14px; }
 """
@@ -95,6 +99,31 @@ class Schermata(QWidget):
         self._anim_luce.setEasingCurve(QEasingCurve.InOutQuad)
         self._anim_luce.valueChanged.connect(self._imposta_luce)
         self._anim_luce.finished.connect(lambda: self._imposta_luce(-1.0))
+        self._anim_luce.finished.connect(self._mostra_suggerimento)
+        self._suggerimento = QLabel(self)
+        self._suggerimento.setObjectName("suggerimento")
+        self._suggerimento.setTextFormat(Qt.RichText)
+        self._suggerimento.setText(TESTO_SUGGERIMENTO)
+        self._suggerimento.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self._opacita = QGraphicsOpacityEffect(self._suggerimento)
+        self._suggerimento.setGraphicsEffect(self._opacita)
+        self._anim_sugg = QVariantAnimation(self)
+        self._anim_sugg.setStartValue(0.0)
+        self._anim_sugg.setEndValue(1.0)
+        self._anim_sugg.setDuration(250)
+        self._anim_sugg.valueChanged.connect(self._opacita.setOpacity)
+        self._suggerimento.hide()
+
+    def _mostra_suggerimento(self) -> None:
+        """Dopo l'onda di luce: spiega cosa fare, finché non inizia un gesto."""
+        if self._riquadro is not None or self._punti:
+            return
+        self._suggerimento.adjustSize()
+        self._suggerimento.move((self.width() - self._suggerimento.width()) // 2, 48)
+        self._opacita.setOpacity(0.0)
+        self._suggerimento.show()
+        self._suggerimento.raise_()
+        self._anim_sugg.start()
 
     def _imposta_buio(self, v: float) -> None:
         self._buio = v
@@ -143,6 +172,7 @@ class Schermata(QWidget):
             return
         p = self._px(ev)
         self._avviso.hide()
+        self._suggerimento.hide()
         if self._riquadro is not None:
             self._maniglia = self._maniglia_vicina(p)
             if self._maniglia is not None:

@@ -27,6 +27,7 @@ QMenu#menuDove { background: rgb(40, 41, 45); color: white; border: 1px solid rg
                  border-radius: 14px; padding: 6px; font-size: 14px; }
 QMenu#menuDove::item { padding: 8px 18px 8px 30px; border-radius: 8px; }
 QMenu#menuDove::item:selected { background: rgba(255, 255, 255, 30); }
+QMenu#menuDove::item:disabled { color: rgba(255, 255, 255, 110); font-size: 12px; padding: 6px 18px 2px 30px; }
 QMenu#menuDove::indicator { left: 10px; width: 12px; height: 12px; }
 QMenu#menuDove::separator { height: 1px; background: rgba(255, 255, 255, 30); margin: 6px 8px; }
 QLineEdit#titolo { background: rgba(255, 255, 255, 22); border: 1px solid rgba(255, 255, 255, 40);
@@ -158,10 +159,36 @@ class Barra(QFrame):
         self.titolo.setPlaceholderText("Titolo della chat da cercare")
         self.titolo.setMinimumWidth(240)
         self.titolo.returnPressed.connect(self.menu.close)
+        self.titolo.textEdited.connect(self._aggiorna_suggerimenti)
+        self.titolo.textChanged.connect(lambda _t: self.imposta_modo(self.modo))
         contenitore = QWidgetAction(self.menu)
         contenitore.setDefaultWidget(self.titolo)
         self.menu.addAction(contenitore)
+        self._suggeriti: list = []
+        self.menu.aboutToShow.connect(lambda: self._aggiorna_suggerimenti(self.titolo.text()))
         self.btn_dove.setMenu(self.menu)
+
+    def _aggiorna_suggerimenti(self, testo: str) -> None:
+        """Sotto la casella del titolo: le chat cercate in passato più attinenti a quanto scritto."""
+        for azione in self._suggeriti:
+            self.menu.removeAction(azione)
+            azione.deleteLater()
+        self._suggeriti = []
+        titoli = destinazione.suggerimenti(destinazione.recenti(), testo)
+        if not titoli:
+            return
+        intestazione = self.menu.addAction("Recenti" if not testo.strip() else "Chat trovate")
+        intestazione.setEnabled(False)
+        self._suggeriti.append(intestazione)
+        for t in titoli:
+            azione = self.menu.addAction(f"💬  {t}")
+            azione.triggered.connect(lambda _c=False, t=t: self.scegli_chat(t))
+            self._suggeriti.append(azione)
+        self.menu.adjustSize()
+
+    def scegli_chat(self, titolo: str) -> None:
+        self.titolo.setText(titolo)
+        self.imposta_modo(destinazione.CERCA)
 
     # ---------- scelta della chat ----------
 
@@ -177,7 +204,13 @@ class Barra(QFrame):
         azione.setChecked(True)
         cerca = azione.data() == destinazione.CERCA
         self.titolo.setEnabled(cerca)
-        etichetta = dict(destinazione.VOCI)[azione.data()].rstrip("…")
+        if cerca and self.titolo.text().strip():
+            etichetta = self.titolo.text().strip()
+            if len(etichetta) > 22:
+                etichetta = etichetta[:21] + "…"
+            etichetta = f"💬 {etichetta}"
+        else:
+            etichetta = dict(destinazione.VOCI)[azione.data()].rstrip("…")
         self.btn_dove.setText(f"{etichetta}  ▾")
 
     def _scelta_dal_menu(self, modo: str) -> None:

@@ -139,3 +139,35 @@ def test_clic_sulla_barra_non_cancella_la_selezione(app):
             QApplication.sendEvent(s._barra, ev)
     assert s._riquadro == prima
     _chiudi(s)
+
+
+def test_suggerimento_dopo_onda_sparisce_al_gesto(app):
+    s = _crea()
+    s._mostra_suggerimento()
+    assert not s._suggerimento.isHidden()
+    assert "Cerchia" in s._suggerimento.text()
+    _mouse(s, QEvent.MouseButtonPress, 100, 100)
+    assert s._suggerimento.isHidden()
+    _chiudi(s)
+
+
+def test_suggerimento_non_compare_con_selezione(app):
+    s = _crea()
+    _trascina(s, QUADRATO)
+    s._mostra_suggerimento()
+    assert s._suggerimento.isHidden()
+    _chiudi(s)
+
+
+def test_menu_propone_chat_recenti_attinenti(app):
+    from cerchia import destinazione
+    for t in ("Spesa", "Progetto PCAnswerFinder", "PC nuovo"):
+        destinazione.salva(Destinazione(CERCA, t))
+    s = _crea()
+    s._barra._aggiorna_suggerimenti("pc")
+    voci = [a.text() for a in s._barra._suggeriti]
+    assert voci == ["Chat trovate", "💬  PC nuovo", "💬  Progetto PCAnswerFinder"]
+    s._barra._suggeriti[2].trigger()
+    assert s._barra.destinazione() == Destinazione(CERCA, "Progetto PCAnswerFinder")
+    assert s._barra.btn_dove.text().startswith("💬 Progetto PCAnswer")
+    _chiudi(s)

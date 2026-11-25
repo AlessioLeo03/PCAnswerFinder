@@ -132,6 +132,9 @@ L'immagine inviata è sempre il ritaglio del riquadro dalla foto congelata, in P
    - **Cerca chat…**: `Ctrl+K`, incolla il titolo scritto nella casella "Titolo chat", attesa dei risultati
      (0,8 s), `Invio` (verificato dall'utente). Titolo vuoto: lo strato resta aperto con
      "Scrivi il titolo della chat". Se nessuna chat corrisponde il risultato non è controllabile.
+     Il menu propone le chat già cercate (ultime 20), le più attinenti a quanto scritto per prime. L'elenco vero
+     delle chat dell'app non è leggibile (UI Automation non lo espone), quindi i suggerimenti vengono solo
+     dalle ricerche fatte con il programma.
 6. Mette l'immagine negli appunti, `Ctrl+V`, attesa del caricamento (tempo fisso configurabile, partenza
    1,5 s).
 7. Mette il testo negli appunti, `Ctrl+V`, `Invio`.
