@@ -67,4 +67,6 @@ def ritaglio_png(img: QImage, r: Rett) -> bytes:
     x0, y0 = math.floor(r.x), math.floor(r.y)
     x1, y1 = math.ceil(r.x + r.w), math.ceil(r.y + r.h)
     area = QRect(x0, y0, x1 - x0, y1 - y0).intersected(img.rect())
+    if area.isEmpty():
+        return b""
     return png_da_immagine(img.copy(area))

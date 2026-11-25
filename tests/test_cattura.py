@@ -23,3 +23,10 @@ def test_bordi_esatti(app):
 
 def test_limitato_all_immagine(app):
     assert _dimensioni(app, Rett(90, 90, 30, 30)) == (10, 10)
+
+
+@pytest.mark.parametrize("r", [Rett(10, 10, 0, 0), Rett(200, 200, 10, 10)])
+def test_ritaglio_vuoto_non_restituisce_immagine(app, r):
+    img = QImage(100, 100, QImage.Format_RGB32)
+    img.fill(QColor("white"))
+    assert ritaglio_png(img, r) == b""
