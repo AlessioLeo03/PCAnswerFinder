@@ -165,9 +165,9 @@ def test_menu_propone_chat_recenti_attinenti(app):
         destinazione.salva(Destinazione(CERCA, t))
     s = _crea()
     s._barra._aggiorna_suggerimenti("pc")
-    voci = [a.text() for a in s._barra._suggeriti]
-    assert voci == ["Chat trovate", "💬  PC nuovo", "💬  Progetto PCAnswerFinder"]
-    s._barra._suggeriti[2].trigger()
+    assert _voci(s) == ["PC nuovo", "Progetto PCAnswerFinder"]
+    assert s._barra.intestazione.text() == "Chat trovate: 2"
+    s._barra.lista.itemClicked.emit(s._barra.lista.item(1))
     assert s._barra.destinazione() == Destinazione(CERCA, "Progetto PCAnswerFinder")
     assert s._barra.btn_dove.text().startswith("💬 Progetto PCAnswer")
     _chiudi(s)
@@ -178,10 +178,42 @@ def test_menu_propone_anche_le_chat_della_barra_laterale(app, monkeypatch):
     monkeypatch.setattr(chat_claude, "_titoli", ["Domande Java SE 17", "Gioco di crescita AI in Unity", "3D"])
     s = _crea()
     s._barra._aggiorna_suggerimenti("java")
-    assert [a.text() for a in s._barra._suggeriti] == ["Chat trovate", "💬  Domande Java SE 17"]
+    assert _voci(s) == ["Domande Java SE 17"]
     s._barra._aggiorna_suggerimenti("cresc")
-    assert [a.text() for a in s._barra._suggeriti][1:] == ["💬  Gioco di crescita AI in Unity"]
+    assert _voci(s) == ["Gioco di crescita AI in Unity"]
     s._barra._aggiorna_suggerimenti("")
-    assert s._barra._suggeriti[0].text() == "Le tue chat"
-    assert len(s._barra._suggeriti) == 4
+    assert s._barra.intestazione.text() == "Le tue chat: 3"
+    assert len(_voci(s)) == 3
+    _chiudi(s)
+
+
+def _voci(s):
+    lista = s._barra.lista
+    return [lista.item(i).data(Qt.UserRole) for i in range(lista.count())]
+
+
+def test_elenco_chat_senza_limite_e_con_scorrimento(app, monkeypatch):
+    from cerchia import chat_claude
+    from cerchia.barra import ALTEZZA_RIGA, RIGHE_VISIBILI
+    monkeypatch.setattr(chat_claude, "_titoli", [f"Chat numero {i}" for i in range(30)])
+    s = _crea()
+    s._barra._aggiorna_suggerimenti("chat")
+    assert len(_voci(s)) == 30
+    assert s._barra.lista.height() == RIGHE_VISIBILI * ALTEZZA_RIGA + 6
+    _chiudi(s)
+
+
+def test_frecce_e_invio_nel_titolo_scelgono_la_chat(app, monkeypatch):
+    from PySide6.QtGui import QKeyEvent
+    from cerchia import chat_claude
+    monkeypatch.setattr(chat_claude, "_titoli", ["Alfa uno", "Alfa due", "Beta"])
+    s = _crea()
+    b = s._barra
+    b.imposta_modo(CERCA)
+    b.titolo.setText("alf")
+    b._aggiorna_suggerimenti("alf")
+    QApplication.sendEvent(b.titolo, QKeyEvent(QEvent.KeyPress, Qt.Key_Down, Qt.NoModifier))
+    assert b.lista.currentRow() == 1
+    b._invio_nel_titolo()
+    assert b.destinazione() == Destinazione(CERCA, "Alfa due")
     _chiudi(s)

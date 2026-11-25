@@ -75,7 +75,7 @@ def unisci(*elenchi: list[str]) -> list[str]:
     return tutti
 
 
-def suggerimenti(elenco: list[str], testo: str, quanti: int = 6) -> list[str]:
+def suggerimenti(elenco: list[str], testo: str, quanti: int | None = 6) -> list[str]:
     """Titoli più attinenti a quanto scritto: prima quelli che iniziano così, poi quelli che lo contengono.
 
     Dentro ogni gruppo resta l'ordine dal più recente. Testo vuoto: i più recenti.

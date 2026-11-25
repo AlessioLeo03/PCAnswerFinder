@@ -1,12 +1,14 @@
 """Barra in basso dello strato, in stile Android: chip sopra, pillola con domanda, scelta della chat e invio."""
-from PySide6.QtCore import QPoint, QPointF, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QPoint, QPointF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QActionGroup, QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap
-from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QToolButton,
-                               QVBoxLayout, QWidgetAction)
+from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMenu,
+                               QPushButton, QToolButton, QVBoxLayout, QWidget, QWidgetAction)
 
 from cerchia import chat_claude, destinazione
 
 ARANCIO = QColor(217, 119, 87)
+RIGHE_VISIBILI = 7   # chat visibili nell'elenco prima di dover scorrere
+ALTEZZA_RIGA = 34
 
 STILE = """
 QFrame#pillola { background: rgba(32, 33, 36, 240); border: 1px solid rgba(255, 255, 255, 28);
@@ -32,6 +34,17 @@ QMenu#menuDove::indicator { left: 10px; width: 12px; height: 12px; }
 QMenu#menuDove::separator { height: 1px; background: rgba(255, 255, 255, 30); margin: 6px 8px; }
 QLineEdit#titolo { background: rgba(255, 255, 255, 22); border: 1px solid rgba(255, 255, 255, 40);
                    border-radius: 10px; color: white; font-size: 14px; padding: 6px 10px; margin: 2px 6px 4px 6px; }
+QWidget#pannello { background: transparent; }
+QLabel#intestazione { color: rgba(255, 255, 255, 120); font-size: 12px; padding: 6px 12px 2px 12px; }
+QListWidget#listaChat { background: transparent; border: none; color: white; font-size: 14px; outline: none;
+                        margin: 0 4px 2px 4px; }
+QListWidget#listaChat::item { height: 34px; padding: 0 10px; border-radius: 8px; }
+QListWidget#listaChat::item:hover { background: rgba(255, 255, 255, 18); }
+QListWidget#listaChat::item:selected { background: rgba(255, 255, 255, 34); color: white; }
+QScrollBar:vertical { background: transparent; width: 8px; margin: 2px; }
+QScrollBar::handle:vertical { background: rgba(255, 255, 255, 70); border-radius: 3px; min-height: 30px; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
 QLineEdit#titolo:disabled { color: rgba(255, 255, 255, 80); border-color: rgba(255, 255, 255, 15); }
 """
 
@@ -158,38 +171,80 @@ class Barra(QFrame):
         self.titolo.setObjectName("titolo")
         self.titolo.setPlaceholderText("Titolo della chat da cercare")
         self.titolo.setMinimumWidth(240)
-        self.titolo.returnPressed.connect(self.menu.close)
+        self.titolo.returnPressed.connect(self._invio_nel_titolo)
         self.titolo.textEdited.connect(self._aggiorna_suggerimenti)
         self.titolo.textChanged.connect(lambda _t: self.imposta_modo(self.modo))
+        self.titolo.installEventFilter(self)
+        # pannello di altezza fissa: casella + intestazione + elenco che scorre
+        pannello = QWidget()
+        pannello.setObjectName("pannello")
+        colonna = QVBoxLayout(pannello)
+        colonna.setContentsMargins(0, 0, 0, 0)
+        colonna.setSpacing(2)
+        self.intestazione = QLabel()
+        self.intestazione.setObjectName("intestazione")
+        self.lista = QListWidget()
+        self.lista.setObjectName("listaChat")
+        self.lista.setFixedHeight(RIGHE_VISIBILI * ALTEZZA_RIGA + 6)
+        self.lista.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.lista.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.lista.setTextElideMode(Qt.ElideRight)
+        self.lista.itemClicked.connect(lambda voce: self.scegli_chat(voce.data(Qt.UserRole)))
+        self.lista.itemActivated.connect(lambda voce: self.scegli_chat(voce.data(Qt.UserRole)))
+        colonna.addWidget(self.titolo)
+        colonna.addWidget(self.intestazione)
+        colonna.addWidget(self.lista)
         contenitore = QWidgetAction(self.menu)
-        contenitore.setDefaultWidget(self.titolo)
+        contenitore.setDefaultWidget(pannello)
         self.menu.addAction(contenitore)
-        self._suggeriti: list = []
         self.menu.aboutToShow.connect(lambda: self._aggiorna_suggerimenti(self.titolo.text()))
         self.btn_dove.setMenu(self.menu)
 
     def _aggiorna_suggerimenti(self, testo: str) -> None:
-        """Sotto la casella del titolo: le chat cercate in passato più attinenti a quanto scritto."""
-        for azione in self._suggeriti:
-            self.menu.removeAction(azione)
-            azione.deleteLater()
-        self._suggeriti = []
+        """Tutte le chat attinenti a quanto scritto (cercate in passato + barra laterale), in un elenco che scorre."""
         elenco = destinazione.unisci(destinazione.recenti(), chat_claude.titoli())
-        titoli = destinazione.suggerimenti(elenco, testo, quanti=8)
-        if not titoli:
-            return
-        intestazione = self.menu.addAction("Le tue chat" if not testo.strip() else "Chat trovate")
-        intestazione.setEnabled(False)
-        self._suggeriti.append(intestazione)
+        titoli = destinazione.suggerimenti(elenco, testo, quanti=None)
+        self.lista.clear()
         for t in titoli:
-            azione = self.menu.addAction(f"💬  {t}")
-            azione.triggered.connect(lambda _c=False, t=t: self.scegli_chat(t))
-            self._suggeriti.append(azione)
-        self.menu.adjustSize()
+            voce = QListWidgetItem(f"💬  {t}")
+            voce.setData(Qt.UserRole, t)
+            voce.setToolTip(t)
+            self.lista.addItem(voce)
+        if titoli:
+            self.lista.setCurrentRow(0)
+        if not elenco:
+            self.intestazione.setText("Nessuna chat letta da Claude: scrivi il titolo")
+        elif not titoli:
+            self.intestazione.setText("Nessuna chat trovata")
+        elif testo.strip():
+            self.intestazione.setText(f"Chat trovate: {len(titoli)}")
+        else:
+            self.intestazione.setText(f"Le tue chat: {len(titoli)}")
+
+    def _invio_nel_titolo(self) -> None:
+        """Invio nella casella: se il testo non è già un titolo esatto, sceglie la prima chat trovata."""
+        voce = self.lista.currentItem()
+        esatto = any(self.lista.item(i).data(Qt.UserRole) == self.titolo.text().strip()
+                     for i in range(self.lista.count()))
+        if voce is not None and not esatto:
+            self.scegli_chat(voce.data(Qt.UserRole))
+        else:
+            self.menu.close()
+
+    def eventFilter(self, oggetto, evento) -> bool:
+        # frecce su/giù nella casella del titolo: si muove nell'elenco
+        if oggetto is self.titolo and evento.type() == QEvent.KeyPress and self.lista.count():
+            passo = {Qt.Key_Down: 1, Qt.Key_Up: -1}.get(evento.key())
+            if passo:
+                riga = max(0, min(self.lista.count() - 1, self.lista.currentRow() + passo))
+                self.lista.setCurrentRow(riga)
+                return True
+        return super().eventFilter(oggetto, evento)
 
     def scegli_chat(self, titolo: str) -> None:
         self.titolo.setText(titolo)
         self.imposta_modo(destinazione.CERCA)
+        self.menu.close()
 
     # ---------- scelta della chat ----------
 
