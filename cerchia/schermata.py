@@ -4,9 +4,9 @@ from math import hypot
 
 from PySide6.QtCore import QEasingCurve, QObject, QPointF, QRectF, Qt, QVariantAnimation, Signal
 from PySide6.QtGui import QColor, QCursor, QLinearGradient, QPainter, QPainterPath, QPen
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QWidget
+from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QWidget
 
-from cerchia import gesti
+from cerchia import destinazione, gesti
 from cerchia.finestre import porta_in_primo_piano
 from cerchia.cattura import Foto, ritaglio_png
 from cerchia.gesti import Parola, Rett, TipoGesto
@@ -21,6 +21,7 @@ BUIO_FUORI = 160   # oscuramento fuori dal riquadro selezionato
 RAGGIO_MANIGLIA = 24
 MSG_OCR_ASSENTE = "Testo non disponibile: in Windows manca la lingua per il riconoscimento del testo."
 MSG_NESSUN_ELEMENTO = "Nessun elemento qui, prova a cerchiare."
+MSG_TITOLO_VUOTO = "Scrivi il titolo della chat"
 
 STILE = """
 QFrame#barra { background: rgba(32, 33, 36, 235); border-radius: 28px; }
@@ -29,6 +30,11 @@ QPushButton { background: rgba(255, 255, 255, 30); color: white; border: none; b
               padding: 8px 14px; font-size: 14px; }
 QPushButton:hover { background: rgba(255, 255, 255, 55); }
 QPushButton:disabled { color: rgba(255, 255, 255, 90); }
+QLineEdit#titolo { background: rgba(255, 255, 255, 30); border-radius: 18px; font-size: 14px; padding: 8px 12px; }
+QComboBox { background: rgba(255, 255, 255, 30); color: white; border: none; border-radius: 18px;
+            padding: 8px 14px; font-size: 14px; }
+QComboBox::drop-down { border: none; width: 0; }
+QComboBox QAbstractItemView { background: rgb(32, 33, 36); color: white; selection-background-color: rgb(70, 72, 78); }
 QLabel#avviso { background: rgba(32, 33, 36, 235); color: white; border-radius: 14px;
                 padding: 8px 14px; font-size: 14px; }
 """
@@ -40,7 +46,7 @@ def _qrect(r: Rett) -> QRectF:
 
 class Schermata(QWidget):
     gesto_iniziato = Signal()
-    invia = Signal(bytes, str)
+    invia = Signal(bytes, str, object)
     copia = Signal(str)
     esci = Signal()
 
@@ -84,9 +90,22 @@ class Schermata(QWidget):
         self._btn_traduci.clicked.connect(lambda: self._invia(True))
         self._btn_copia = QPushButton("Copia testo")
         self._btn_copia.clicked.connect(self._copia)
+        self._dove = QComboBox()
+        for valore, etichetta in destinazione.VOCI:
+            self._dove.addItem(etichetta, valore)
+        self._titolo = QLineEdit()
+        self._titolo.setObjectName("titolo")
+        self._titolo.setPlaceholderText("Titolo chat")
+        self._titolo.setFixedWidth(160)
+        self._titolo.returnPressed.connect(lambda: self._invia(False))
+        scelta = destinazione.carica()
+        self._dove.setCurrentIndex(max(0, self._dove.findData(scelta.modo)))
+        self._titolo.setText(scelta.titolo)
+        self._titolo.setVisible(scelta.modo == destinazione.CERCA)
+        self._dove.currentIndexChanged.connect(self._dove_cambiata)
         self._btn_invia = QPushButton("Invia")
         self._btn_invia.clicked.connect(lambda: self._invia(False))
-        for w in (self._campo, self._btn_traduci, self._btn_copia, self._btn_invia):
+        for w in (self._campo, self._btn_traduci, self._btn_copia, self._dove, self._titolo, self._btn_invia):
             riga.addWidget(w)
         riga.setStretch(0, 1)
         self._barra.setAttribute(Qt.WA_NoMousePropagation)
@@ -250,7 +269,7 @@ class Schermata(QWidget):
     # ---------- barra e avvisi ----------
 
     def _mostra_barra(self) -> None:
-        larghezza = min(720, self.width() - 32)
+        larghezza = min(900, self.width() - 32)
         altezza = 56
         self._barra.setGeometry((self.width() - larghezza) // 2, self.height() - altezza - 40, larghezza, altezza)
         self._aggiorna_pulsanti()
@@ -270,14 +289,29 @@ class Schermata(QWidget):
         self._avviso.show()
         self._avviso.raise_()
 
+    def _dove_cambiata(self) -> None:
+        cerca = self._dove.currentData() == destinazione.CERCA
+        self._titolo.setVisible(cerca)
+        if cerca:
+            self._titolo.setFocus()
+
+    def _destinazione(self) -> destinazione.Destinazione:
+        return destinazione.Destinazione(self._dove.currentData(), self._titolo.text().strip())
+
     def _invia(self, traduci: bool) -> None:
         if self._riquadro is None:
+            return
+        dest = self._destinazione()
+        if not dest.valida():
+            self._mostra_avviso(MSG_TITOLO_VUOTO)
+            self._titolo.setFocus()
             return
         messaggio = componi(self._campo.text(), traduci)
         png = ritaglio_png(self._foto.immagine, self._riquadro)
         if not png:
             return
-        self.invia.emit(png, messaggio)
+        destinazione.salva(dest)
+        self.invia.emit(png, messaggio, dest)
 
     def _copia(self) -> None:
         testo = gesti.testo_di(self._sel)
@@ -343,7 +377,7 @@ class Schermata(QWidget):
 class Sessione(QObject):
     """Uno strato per ogni schermo; una sola selezione alla volta."""
 
-    invia = Signal(bytes, str)
+    invia = Signal(bytes, str, object)
     copia = Signal(str)
     chiusa = Signal()
 

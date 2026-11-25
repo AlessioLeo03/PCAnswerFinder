@@ -9,6 +9,7 @@ from ctypes import wintypes
 from PySide6.QtWidgets import QApplication
 
 from cerchia import appunti, impostazioni, tastiera
+from cerchia.destinazione import APERTA, CERCA, Destinazione
 from cerchia.finestre import porta_in_primo_piano
 
 PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
@@ -86,7 +87,28 @@ def _apri_chat_nuova() -> bool:
     return False
 
 
-def invia(png: bytes, testo: str, avvisa: Callable[[str], None]) -> None:
+def _vai_alla_chat(dest: Destinazione, avvisa: Callable[[str], None]) -> None:
+    """Porta l'app di Claude sulla chat scelta; l'app deve già essere in primo piano."""
+    if dest.modo == APERTA:
+        return
+    if dest.modo == CERCA:
+        tastiera.combinazione(*impostazioni.CERCA_CHAT)
+        _aspetta(impostazioni.ATTESA_RICERCA_MS)
+        appunti.metti_testo(dest.titolo.strip())
+        _aspetta(100)
+        tastiera.combinazione(VK_CONTROL, VK_V)
+        _aspetta(impostazioni.ATTESA_RISULTATI_MS)
+        tastiera.combinazione(VK_RETURN)
+        _aspetta(impostazioni.ATTESA_CHAT_NUOVA_MS)
+        return
+    if _apri_chat_nuova():
+        _aspetta(impostazioni.ATTESA_CHAT_NUOVA_MS)
+    else:
+        avvisa("Chat nuova non disponibile: uso la chat aperta.")
+
+
+def invia(png: bytes, testo: str, avvisa: Callable[[str], None],
+          dest: Destinazione = Destinazione()) -> None:
     salvati = appunti.salva()
     hwnd = trova_finestra()
     if hwnd is None:
@@ -113,10 +135,7 @@ def invia(png: bytes, testo: str, avvisa: Callable[[str], None]) -> None:
             return
         _aspetta(300)
 
-        if _apri_chat_nuova():
-            _aspetta(impostazioni.ATTESA_CHAT_NUOVA_MS)
-        else:
-            avvisa("Chat nuova non disponibile: uso la chat aperta.")
+        _vai_alla_chat(dest, avvisa)
 
         appunti.metti_immagine(png)
         _aspetta(100)

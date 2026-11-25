@@ -22,6 +22,10 @@ Avvio: `.\.venv\Scripts\pythonw avvia.pyw` (oppure da "Avvia con Windows").
 - [ ] Traduci → "Traduci in italiano il testo che vedi nell'immagine.", senza testo incollato.
 - [ ] Domanda scritta → arriva solo la domanda con l'immagine, senza "Testo selezionato".
 - [ ] Copia testo → "Testo copiato." e testo negli appunti.
+- [ ] Menu "Chat aperta" → la selezione va nella chat aperta in Claude, nessuna chat nuova.
+- [ ] Menu "Cerca chat…" con un titolo esistente → si apre quella chat e riceve la selezione.
+- [ ] "Cerca chat…" con titolo vuoto → "Scrivi il titolo della chat", nessun invio.
+- [ ] La scelta del menu e il titolo restano uguali alla volta successiva.
 - [ ] Appunti ripristinati dopo l'invio.
 - [ ] App di Claude chiusa → si apre e riceve la selezione.
 

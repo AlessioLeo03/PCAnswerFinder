@@ -11,6 +11,7 @@ from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from cerchia import appunti, cattura, elementi, invio_claude
+from cerchia.destinazione import Destinazione
 from cerchia.schermata import Sessione
 from cerchia.tasto_win import TastoWin
 
@@ -103,7 +104,7 @@ class Programma:
     def _chiusa(self) -> None:
         self.sessione = None
 
-    def _invia(self, png: bytes, messaggio: str) -> None:
+    def _invia(self, png: bytes, messaggio: str, dest: Destinazione) -> None:
         if self._invio_in_corso:
             return
         if self.sessione is not None:
@@ -112,7 +113,7 @@ class Programma:
 
         def _esegui() -> None:
             try:
-                invio_claude.invia(png, messaggio, self.avvisa)
+                invio_claude.invia(png, messaggio, self.avvisa, dest)
             finally:
                 self._invio_in_corso = False
 

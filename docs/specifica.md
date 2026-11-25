@@ -126,8 +126,12 @@ L'immagine inviata è sempre il ritaglio del riquadro dalla foto congelata, in P
 3. Trova la finestra dell'app desktop (`claude.exe` con percorso dentro `\AnthropicClaude\`, titolo non
    vuoto). Se non c'è, avvia `%LOCALAPPDATA%\AnthropicClaude\claude.exe` e aspetta fino a 20 s.
 4. Porta la finestra in primo piano.
-5. Apre una chat nuova. **Metodo da verificare per primo** (vedi §9): scorciatoia da tastiera dell'app o link
-   `claude://`. Se nessun metodo funziona, ripiego: chat aperta in quel momento + notifica.
+5. Va sulla chat scelta nel menu della barra (la scelta e l'ultimo titolo vengono ricordati):
+   - **Chat nuova**: `Ctrl+N` (verificato dall'utente). Se non disponibile: chat aperta + notifica.
+   - **Chat aperta**: nessun tasto, usa la chat aperta in quel momento.
+   - **Cerca chat…**: `Ctrl+K`, incolla il titolo scritto nella casella "Titolo chat", attesa dei risultati
+     (0,8 s), `Invio` (verificato dall'utente). Titolo vuoto: lo strato resta aperto con
+     "Scrivi il titolo della chat". Se nessuna chat corrisponde il risultato non è controllabile.
 6. Mette l'immagine negli appunti, `Ctrl+V`, attesa del caricamento (tempo fisso configurabile, partenza
    1,5 s).
 7. Mette il testo negli appunti, `Ctrl+V`, `Invio`.

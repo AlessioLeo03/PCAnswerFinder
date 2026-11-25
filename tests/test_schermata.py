@@ -4,7 +4,8 @@ from PySide6.QtWidgets import QApplication
 
 from cerchia.cattura import Foto
 from cerchia.gesti import Rett, TipoGesto
-from cerchia.schermata import MSG_NESSUN_ELEMENTO, Schermata
+from cerchia.destinazione import APERTA, CERCA, NUOVA, Destinazione
+from cerchia.schermata import MSG_NESSUN_ELEMENTO, MSG_TITOLO_VUOTO, Schermata
 
 
 def _crea(trova=lambda x, y: None):
@@ -44,7 +45,7 @@ QUADRATO = [(100, 100), (200, 100), (300, 100), (300, 200), (300, 300), (200, 30
 def test_cerchio_mostra_barra_e_invia(app):
     s = _crea()
     ricevuti = []
-    s.invia.connect(lambda png, msg: ricevuti.append((png, msg)))
+    s.invia.connect(lambda png, msg, dest: ricevuti.append((png, msg, dest)))
     _trascina(s, QUADRATO)
     assert s._riquadro is not None
     assert s._tipo is TipoGesto.CERCHIO
@@ -54,6 +55,48 @@ def test_cerchio_mostra_barra_e_invia(app):
     assert len(ricevuti) == 1
     assert len(ricevuti[0][0]) > 0
     assert ricevuti[0][1] == "Che cos'è?"
+    assert ricevuti[0][2] == Destinazione(NUOVA, "")
+    _chiudi(s)
+
+
+def _scegli(s, modo):
+    s._dove.setCurrentIndex(s._dove.findData(modo))
+
+
+def test_cerca_chat_senza_titolo_non_invia(app):
+    s = _crea()
+    ricevuti = []
+    s.invia.connect(lambda *a: ricevuti.append(a))
+    _trascina(s, QUADRATO)
+    _scegli(s, CERCA)
+    assert not s._titolo.isHidden()
+    s._titolo.setText("   ")
+    s._invia(False)
+    assert ricevuti == []
+    assert s._avviso.text() == MSG_TITOLO_VUOTO == "Scrivi il titolo della chat"
+    _chiudi(s)
+
+
+def test_cerca_chat_invia_titolo_e_lo_ricorda(app):
+    s = _crea()
+    ricevuti = []
+    s.invia.connect(lambda *a: ricevuti.append(a))
+    _trascina(s, QUADRATO)
+    _scegli(s, CERCA)
+    s._titolo.setText(" PCAnswerFinder ")
+    s._invia(False)
+    assert ricevuti[0][2] == Destinazione(CERCA, "PCAnswerFinder")
+    _chiudi(s)
+    nuova = _crea()
+    assert nuova._dove.currentData() == CERCA
+    assert nuova._titolo.text() == "PCAnswerFinder"
+    _chiudi(nuova)
+
+
+def test_chat_aperta_nasconde_titolo(app):
+    s = _crea()
+    _scegli(s, APERTA)
+    assert s._titolo.isHidden()
     _chiudi(s)
 
 
