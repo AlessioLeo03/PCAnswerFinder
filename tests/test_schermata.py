@@ -60,7 +60,7 @@ def test_cerchio_mostra_barra_e_invia(app):
 
 
 def _scegli(s, modo):
-    s._dove.setCurrentIndex(s._dove.findData(modo))
+    s._barra.imposta_modo(modo)
 
 
 def test_cerca_chat_senza_titolo_non_invia(app):
@@ -69,7 +69,7 @@ def test_cerca_chat_senza_titolo_non_invia(app):
     s.invia.connect(lambda *a: ricevuti.append(a))
     _trascina(s, QUADRATO)
     _scegli(s, CERCA)
-    assert not s._titolo.isHidden()
+    assert s._titolo.isEnabled()
     s._titolo.setText("   ")
     s._invia(False)
     assert ricevuti == []
@@ -88,15 +88,15 @@ def test_cerca_chat_invia_titolo_e_lo_ricorda(app):
     assert ricevuti[0][2] == Destinazione(CERCA, "PCAnswerFinder")
     _chiudi(s)
     nuova = _crea()
-    assert nuova._dove.currentData() == CERCA
+    assert nuova._barra.modo == CERCA
     assert nuova._titolo.text() == "PCAnswerFinder"
     _chiudi(nuova)
 
 
-def test_chat_aperta_nasconde_titolo(app):
+def test_chat_aperta_disattiva_titolo(app):
     s = _crea()
     _scegli(s, APERTA)
-    assert s._titolo.isHidden()
+    assert not s._titolo.isEnabled()
     _chiudi(s)
 
 
