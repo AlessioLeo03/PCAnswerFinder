@@ -171,3 +171,17 @@ def test_menu_propone_chat_recenti_attinenti(app):
     assert s._barra.destinazione() == Destinazione(CERCA, "Progetto PCAnswerFinder")
     assert s._barra.btn_dove.text().startswith("💬 Progetto PCAnswer")
     _chiudi(s)
+
+
+def test_menu_propone_anche_le_chat_della_barra_laterale(app, monkeypatch):
+    from cerchia import chat_claude
+    monkeypatch.setattr(chat_claude, "_titoli", ["Domande Java SE 17", "Gioco di crescita AI in Unity", "3D"])
+    s = _crea()
+    s._barra._aggiorna_suggerimenti("java")
+    assert [a.text() for a in s._barra._suggeriti] == ["Chat trovate", "💬  Domande Java SE 17"]
+    s._barra._aggiorna_suggerimenti("cresc")
+    assert [a.text() for a in s._barra._suggeriti][1:] == ["💬  Gioco di crescita AI in Unity"]
+    s._barra._aggiorna_suggerimenti("")
+    assert s._barra._suggeriti[0].text() == "Le tue chat"
+    assert len(s._barra._suggeriti) == 4
+    _chiudi(s)

@@ -54,3 +54,7 @@ def test_cerca_senza_titolo_non_valida():
     assert Destinazione(CERCA, "x").valida()
     assert Destinazione(APERTA).valida()
     assert Destinazione(NUOVA).valida()
+
+
+def test_unisci_senza_doppioni():
+    assert destinazione.unisci(["A", "b"], ["B", "c"], ["a"]) == ["A", "b", "c"]

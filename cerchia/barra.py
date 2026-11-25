@@ -4,7 +4,7 @@ from PySide6.QtGui import QActionGroup, QColor, QIcon, QPainter, QPainterPath, Q
 from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QLineEdit, QMenu, QPushButton, QToolButton,
                                QVBoxLayout, QWidgetAction)
 
-from cerchia import destinazione
+from cerchia import chat_claude, destinazione
 
 ARANCIO = QColor(217, 119, 87)
 
@@ -174,10 +174,11 @@ class Barra(QFrame):
             self.menu.removeAction(azione)
             azione.deleteLater()
         self._suggeriti = []
-        titoli = destinazione.suggerimenti(destinazione.recenti(), testo)
+        elenco = destinazione.unisci(destinazione.recenti(), chat_claude.titoli())
+        titoli = destinazione.suggerimenti(elenco, testo, quanti=8)
         if not titoli:
             return
-        intestazione = self.menu.addAction("Recenti" if not testo.strip() else "Chat trovate")
+        intestazione = self.menu.addAction("Le tue chat" if not testo.strip() else "Chat trovate")
         intestazione.setEnabled(False)
         self._suggeriti.append(intestazione)
         for t in titoli:

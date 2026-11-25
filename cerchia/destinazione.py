@@ -63,6 +63,18 @@ def aggiungi_recente(elenco: list[str], titolo: str) -> list[str]:
     return ([titolo] + resto)[:MAX_RECENTI]
 
 
+def unisci(*elenchi: list[str]) -> list[str]:
+    """Unisce più elenchi di titoli tenendo il primo di ogni doppione (maiuscole ignorate)."""
+    visti: set[str] = set()
+    tutti = []
+    for elenco in elenchi:
+        for t in elenco:
+            if t.casefold() not in visti:
+                visti.add(t.casefold())
+                tutti.append(t)
+    return tutti
+
+
 def suggerimenti(elenco: list[str], testo: str, quanti: int = 6) -> list[str]:
     """Titoli più attinenti a quanto scritto: prima quelli che iniziano così, poi quelli che lo contengono.
 

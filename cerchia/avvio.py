@@ -10,7 +10,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from cerchia import appunti, cattura, elementi, invio_claude
+from cerchia import appunti, cattura, chat_claude, elementi, invio_claude
 from cerchia.destinazione import Destinazione
 from cerchia.schermata import Sessione
 from cerchia.tasto_win import TastoWin
@@ -79,6 +79,7 @@ class Programma:
         self.tasto.avvia.connect(self._apri_differito)
         self.tasto.attiva()
         app.aboutToQuit.connect(self.tasto.disattiva)
+        chat_claude.aggiorna_in_background()
 
     def avvisa(self, testo: str) -> None:
         self.icona.showMessage(TITOLO, testo)
@@ -90,6 +91,7 @@ class Programma:
     def apri(self) -> None:
         if self.sessione is not None or self._invio_in_corso:
             return
+        chat_claude.aggiorna_in_background()
         try:
             s = Sessione(cattura.fotografa(), elementi.rett_elemento)
         except Exception as e:
