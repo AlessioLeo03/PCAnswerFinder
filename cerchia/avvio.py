@@ -1,5 +1,8 @@
 """Avvio di Cerchia e Chiedi: icona di notifica e collegamento dei pezzi."""
+import logging
+import os
 import sys
+import traceback
 import winreg
 from pathlib import Path
 
@@ -72,12 +75,16 @@ class Programma:
         self.icona.setContextMenu(self.menu)
         self.icona.show()
         self.tasto = TastoWin()
-        self.tasto.avvia.connect(self.apri)
+        self.tasto.avvia.connect(self._apri_differito)
         self.tasto.attiva()
         app.aboutToQuit.connect(self.tasto.disattiva)
 
     def avvisa(self, testo: str) -> None:
         self.icona.showMessage(TITOLO, testo)
+
+    def _apri_differito(self) -> None:
+        # il lavoro pesante esce dal ciclo del hook di tastiera
+        QTimer.singleShot(0, self.apri)
 
     def apri(self) -> None:
         if self.sessione is not None or self._invio_in_corso:
@@ -118,10 +125,46 @@ class Programma:
         self.avvisa("Testo copiato.")
 
 
+def _configura_log() -> None:
+    cartella = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "CerchiaEChiedi"
+    try:
+        cartella.mkdir(parents=True, exist_ok=True)
+        logging.basicConfig(filename=str(cartella / "errori.log"), level=logging.WARNING, encoding="utf-8",
+                            format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    except OSError:
+        pass
+
+
+def _installa_gestore_errori(prendi_programma) -> None:
+    def gestore(tipo, valore, tb) -> None:
+        try:
+            logging.error("Errore non gestito:\n%s", "".join(traceback.format_exception(tipo, valore, tb)))
+        except Exception:
+            pass
+        programma = prendi_programma()
+        if programma is None:
+            return
+        try:
+            if programma.sessione is not None:
+                programma.sessione.chiudi()
+        except Exception:
+            logging.exception("errore chiudendo lo strato")
+        try:
+            programma.avvisa(f"Errore: {valore}")
+        except Exception:
+            logging.exception("errore nella notifica")
+
+    sys.excepthook = gestore
+
+
 def main() -> None:
+    _configura_log()
+    contenitore: list[Programma] = []
+    _installa_gestore_errori(lambda: contenitore[0] if contenitore else None)
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-    programma = Programma(app)  # noqa: F841 — tenuto vivo fino all'uscita
+    programma = Programma(app)
+    contenitore.append(programma)
     sys.exit(app.exec())
 
 

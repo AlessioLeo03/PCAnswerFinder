@@ -9,9 +9,9 @@ from ctypes import wintypes
 from PySide6.QtWidgets import QApplication
 
 from cerchia import appunti, impostazioni, tastiera
+from cerchia.finestre import porta_in_primo_piano
 
 PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
-SW_RESTORE = 9
 VK_CONTROL = 0x11
 VK_RETURN = 0x0D
 VK_V = 0x56
@@ -24,18 +24,11 @@ _user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(winty
 _user32.GetWindowThreadProcessId.restype = wintypes.DWORD
 _user32.IsWindowVisible.argtypes = [wintypes.HWND]
 _user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
-_user32.IsIconic.argtypes = [wintypes.HWND]
-_user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
-_user32.BringWindowToTop.argtypes = [wintypes.HWND]
-_user32.SetForegroundWindow.argtypes = [wintypes.HWND]
-_user32.GetForegroundWindow.restype = wintypes.HWND
-_user32.AttachThreadInput.argtypes = [wintypes.DWORD, wintypes.DWORD, wintypes.BOOL]
 _kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
 _kernel32.OpenProcess.restype = wintypes.HANDLE
 _kernel32.QueryFullProcessImageNameW.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.LPWSTR,
                                                  ctypes.POINTER(wintypes.DWORD)]
 _kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-_kernel32.GetCurrentThreadId.restype = wintypes.DWORD
 
 
 def _aspetta(ms: int) -> None:
@@ -79,23 +72,7 @@ def trova_finestra() -> int | None:
 
 
 def _attiva(hwnd: int) -> bool:
-    if _user32.IsIconic(hwnd):
-        _user32.ShowWindow(hwnd, SW_RESTORE)
-    davanti = _user32.GetForegroundWindow()
-    t_davanti = _user32.GetWindowThreadProcessId(davanti, None) if davanti else 0
-    t_mio = _kernel32.GetCurrentThreadId()
-    collegato = bool(t_davanti) and t_davanti != t_mio and bool(_user32.AttachThreadInput(t_mio, t_davanti, True))
-    try:
-        _user32.BringWindowToTop(hwnd)
-        _user32.SetForegroundWindow(hwnd)
-    finally:
-        if collegato:
-            _user32.AttachThreadInput(t_mio, t_davanti, False)
-    for _ in range(20):
-        if _user32.GetForegroundWindow() == hwnd:
-            return True
-        _aspetta(50)
-    return False
+    return porta_in_primo_piano(hwnd)
 
 
 def _apri_chat_nuova() -> bool:

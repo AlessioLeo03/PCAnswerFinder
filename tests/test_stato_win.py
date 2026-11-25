@@ -52,3 +52,11 @@ def test_durante_avviato_altri_tasti_passano_e_win_resta_bloccato():
     s.tempo(600)
     assert not s.tasto(VK_E, True, 700).blocca
     assert s.tasto(VK_LWIN, True, 710).blocca
+
+
+def test_rimanente_ms():
+    st = StatoWin(soglia_ms=500)
+    st.tasto(VK_LWIN, True, 1000)
+    assert st.rimanente_ms(1400) == 100
+    assert st.rimanente_ms(1495) == 10
+    assert st.rimanente_ms(1600) == 10

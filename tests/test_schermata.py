@@ -81,3 +81,18 @@ def test_esc_emette_esci(app):
     QApplication.sendEvent(s, QKeyEvent(QEvent.KeyPress, Qt.Key_Escape, Qt.NoModifier))
     assert visti == [1]
     _chiudi(s)
+
+
+def test_clic_sulla_barra_non_cancella_la_selezione(app):
+    s = _crea()
+    _trascina(s, QUADRATO)
+    prima = s._riquadro
+    assert prima is not None
+    for x in (2, s._barra.width() // 2):
+        pt = QPointF(x, 2)
+        for tipo, stato in ((QEvent.MouseButtonPress, Qt.LeftButton), (QEvent.MouseButtonRelease, Qt.NoButton)):
+            ev = QMouseEvent(tipo, pt, s._barra.mapToGlobal(pt), Qt.LeftButton, stato, Qt.NoModifier,
+                             QPointingDevice.primaryPointingDevice())
+            QApplication.sendEvent(s._barra, ev)
+    assert s._riquadro == prima
+    _chiudi(s)

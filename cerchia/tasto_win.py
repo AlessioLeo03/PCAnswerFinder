@@ -1,11 +1,14 @@
 """Hook di tastiera a basso livello: riconosce la pressione lunga del tasto Win."""
 import ctypes
+import logging
 from ctypes import wintypes
 
-from PySide6.QtCore import QObject, QTimer, Signal
+from PySide6.QtCore import QObject, Qt, QTimer, Signal
 
 from cerchia import tastiera
 from cerchia.stato_win import SOGLIA_MS, Stato, StatoWin
+
+log = logging.getLogger(__name__)
 
 WH_KEYBOARD_LL = 13
 WM_KEYDOWN = 0x0100
@@ -40,6 +43,7 @@ class TastoWin(QObject):
         self._stato = StatoWin()
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
+        self._timer.setTimerType(Qt.PreciseTimer)
         self._timer.setInterval(SOGLIA_MS)
         self._timer.timeout.connect(self._scaduto)
         self._proc = HOOKPROC(self._callback)  # riferimento tenuto vivo
@@ -73,9 +77,12 @@ class TastoWin(QObject):
                     if esito.blocca:
                         return 1
         except Exception:  # l'hook non deve mai bloccare la tastiera
-            pass
+            log.exception("errore nel hook di tastiera")
         return _user32.CallNextHookEx(None, n_code, w_param, l_param)
 
     def _scaduto(self) -> None:
-        if self._stato.tempo(_kernel32.GetTickCount()):
+        ora = _kernel32.GetTickCount()
+        if self._stato.tempo(ora):
             self.avvia.emit()
+        elif self._stato.stato is Stato.ATTESA:  # timer scattato un po' in anticipo
+            self._timer.start(self._stato.rimanente_ms(ora))

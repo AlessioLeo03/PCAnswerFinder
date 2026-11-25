@@ -13,6 +13,7 @@ Avvio: `.\.venv\Scripts\pythonw avvia.pyw` (oppure da "Avvia con Windows").
 - [ ] Testo trascinato → parole azzurre; Copia testo attivo.
 - [ ] Clic su un elemento → riquadro attorno all'elemento; clic sul desktop vuoto → "Nessun elemento qui, prova a cerchiare."
 - [ ] Esc chiude senza inviare.
+- [ ] Esc premuto subito, prima di qualsiasi clic, chiude lo strato.
 - [ ] Con due monitor a ridimensionamento diverso il ritaglio corrisponde al disegno.
 
 ## Invio
@@ -27,6 +28,11 @@ Avvio: `.\.venv\Scripts\pythonw avvia.pyw` (oppure da "Avvia con Windows").
 - [ ] Spunta "Avvia con Windows", riavvia il PC: l'icona compare da sola.
 - [ ] Togli la spunta: dopo il riavvio non parte.
 
+## Errori
+- [ ] Il file %LOCALAPPDATA%\CerchiaEChiedi\errori.log raccoglie gli errori (se ce ne sono).
+
 ## Limiti noti
 - Sopra programmi avviati come amministratore il tasto Win non viene intercettato.
 - Win + L potrebbe non bloccare il PC mentre Win è in attesa del mezzo secondo.
+- Gli appunti vengono ripristinati solo nei formati che Qt conosce (testo, HTML, immagini): formati privati di altri programmi possono andare persi.
+- Le catture incollate restano nella cronologia degli appunti di Windows (Win + V).

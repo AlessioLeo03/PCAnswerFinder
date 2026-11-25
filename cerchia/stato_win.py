@@ -64,6 +64,10 @@ class StatoWin:
             return Esito(blocca=True)
         return Esito(blocca=False)
 
+    def rimanente_ms(self, ora_ms: int) -> int:
+        """Millisecondi che mancano alla soglia (almeno 10)."""
+        return max(10, self.soglia_ms - (ora_ms - self._inizio_ms))
+
     def tempo(self, ora_ms: int) -> bool:
         """Da chiamare con un timer: True se la pressione è appena diventata lunga."""
         if self.stato is Stato.ATTESA and ora_ms - self._inizio_ms >= self.soglia_ms:

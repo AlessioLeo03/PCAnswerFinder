@@ -7,6 +7,7 @@ from PySide6.QtGui import QColor, QCursor, QLinearGradient, QPainter, QPainterPa
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton, QWidget
 
 from cerchia import gesti
+from cerchia.finestre import porta_in_primo_piano
 from cerchia.cattura import Foto, ritaglio_png
 from cerchia.gesti import Parola, Rett, TipoGesto
 from cerchia.messaggio import componi
@@ -45,8 +46,8 @@ class Schermata(QWidget):
 
     def __init__(self, foto: Foto, trova_elemento: TrovaElemento) -> None:
         super().__init__(None, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground)
         self.setCursor(Qt.CrossCursor)
+        self.setScreen(foto.schermo)
         self.setGeometry(foto.schermo.geometry())
         self._foto = foto
         self._trova_elemento = trova_elemento
@@ -88,9 +89,11 @@ class Schermata(QWidget):
         for w in (self._campo, self._btn_traduci, self._btn_copia, self._btn_invia):
             riga.addWidget(w)
         riga.setStretch(0, 1)
+        self._barra.setAttribute(Qt.WA_NoMousePropagation)
         self._barra.hide()
         self._avviso = QLabel(self)
         self._avviso.setObjectName("avviso")
+        self._avviso.setAttribute(Qt.WA_NoMousePropagation)
         self._avviso.hide()
 
     def _crea_animazioni(self) -> None:
@@ -363,8 +366,16 @@ class Sessione(QObject):
 
     def mostra(self) -> None:
         schermo_mouse = QCursor.pos()
+        sotto = None
         for s in self._schermate:
-            s.mostra(attiva=s.geometry().contains(schermo_mouse))
+            dentro = s.geometry().contains(schermo_mouse)
+            s.mostra(attiva=dentro)
+            if dentro and sotto is None:
+                sotto = s
+        if sotto is None and self._schermate:
+            sotto = self._schermate[0]
+        if sotto is not None:
+            porta_in_primo_piano(int(sotto.winId()))
 
     def _azzera_altre(self, attiva: Schermata) -> None:
         for s in self._schermate:

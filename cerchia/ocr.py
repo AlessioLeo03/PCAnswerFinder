@@ -47,11 +47,10 @@ class LettoreOcr(QObject):
     pronto = Signal(object)  # list[Parola] | None
 
     def avvia(self, img: QImage) -> None:
-        png = png_da_immagine(img)
-        threading.Thread(target=self._lavora, args=(png,), daemon=True).start()
+        threading.Thread(target=self._lavora, args=(img.copy(),), daemon=True).start()
 
-    def _lavora(self, png: bytes) -> None:
-        parole = leggi(png)
+    def _lavora(self, img: QImage) -> None:
+        parole = leggi(png_da_immagine(img))
         try:
             self.pronto.emit(parole)
         except RuntimeError:  # lo strato è già stato chiuso
