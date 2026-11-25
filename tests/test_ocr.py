@@ -1,15 +1,9 @@
 import threading
 
-import pytest
-from PySide6.QtGui import QColor, QFont, QGuiApplication, QImage, QPainter
+from PySide6.QtGui import QColor, QFont, QImage, QPainter
 
 from cerchia import ocr
 from cerchia.cattura import png_da_immagine
-
-
-@pytest.fixture(scope="module")
-def app():
-    return QGuiApplication.instance() or QGuiApplication([])
 
 
 def test_legge_parole_con_posizione(app):

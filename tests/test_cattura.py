@@ -1,13 +1,8 @@
 import pytest
-from PySide6.QtGui import QColor, QGuiApplication, QImage
+from PySide6.QtGui import QColor, QImage
 
 from cerchia.cattura import ritaglio_png
 from cerchia.gesti import Rett
-
-
-@pytest.fixture(scope="module")
-def app():
-    return QGuiApplication.instance() or QGuiApplication([])
 
 
 def _dimensioni(app, r):
