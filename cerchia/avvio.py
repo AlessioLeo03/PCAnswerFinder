@@ -1,11 +1,11 @@
 """Avvio di Cerchia e Chiedi: icona di notifica e collegamento dei pezzi."""
 import sys
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from cerchia import cattura, elementi
+from cerchia import appunti, cattura, elementi, invio_claude
 from cerchia.schermata import Sessione
 from cerchia.tasto_win import TastoWin
 
@@ -61,12 +61,15 @@ class Programma:
         self.sessione = None
 
     def _invia(self, png: bytes, messaggio: str) -> None:
-        self.sessione.chiudi()
-        self.avvisa(f"Da inviare ({len(png)} byte): {messaggio[:80]}")
+        if self.sessione is not None:
+            self.sessione.chiudi()
+        QTimer.singleShot(80, lambda: invio_claude.invia(png, messaggio, self.avvisa))
 
     def _copia(self, testo: str) -> None:
-        self.sessione.chiudi()
-        self.avvisa(f"Da copiare: {testo[:80]}")
+        if self.sessione is not None:
+            self.sessione.chiudi()
+        appunti.metti_testo(testo)
+        self.avvisa("Testo copiato.")
 
 
 def main() -> None:
