@@ -115,7 +115,10 @@ def invia(png: bytes, testo: str, avvisa: Callable[[str], None]) -> None:
     if hwnd is None:
         programma = os.path.expandvars(impostazioni.CLAUDE_EXE)
         if os.path.exists(programma):
-            subprocess.Popen([programma])
+            try:
+                subprocess.Popen([programma])
+            except OSError:
+                pass
         fine = time.monotonic() + 20
         while hwnd is None and time.monotonic() < fine:
             _aspetta(500)
@@ -126,27 +129,31 @@ def invia(png: bytes, testo: str, avvisa: Callable[[str], None]) -> None:
             return
         _aspetta(impostazioni.ATTESA_AVVIO_MS)
 
-    if not _attiva(hwnd):
+    try:
+        if not _attiva(hwnd):
+            appunti.metti_immagine(png)
+            avvisa("Non riesco a portare Claude in primo piano: incolla con Ctrl+V.")
+            return
+        _aspetta(300)
+
+        if _apri_chat_nuova():
+            _aspetta(impostazioni.ATTESA_CHAT_NUOVA_MS)
+        else:
+            avvisa("Chat nuova non disponibile: uso la chat aperta.")
+
         appunti.metti_immagine(png)
-        avvisa("Non riesco a portare Claude in primo piano: incolla con Ctrl+V.")
-        return
-    _aspetta(300)
+        _aspetta(100)
+        tastiera.combinazione(VK_CONTROL, VK_V)
+        _aspetta(impostazioni.ATTESA_CARICAMENTO_MS)
 
-    if _apri_chat_nuova():
-        _aspetta(impostazioni.ATTESA_CHAT_NUOVA_MS)
-    else:
-        avvisa("Chat nuova non disponibile: uso la chat aperta.")
+        appunti.metti_testo(testo)
+        _aspetta(100)
+        tastiera.combinazione(VK_CONTROL, VK_V)
+        _aspetta(200)
+        tastiera.combinazione(VK_RETURN)
 
-    appunti.metti_immagine(png)
-    _aspetta(100)
-    tastiera.combinazione(VK_CONTROL, VK_V)
-    _aspetta(impostazioni.ATTESA_CARICAMENTO_MS)
-
-    appunti.metti_testo(testo)
-    _aspetta(100)
-    tastiera.combinazione(VK_CONTROL, VK_V)
-    _aspetta(200)
-    tastiera.combinazione(VK_RETURN)
-
-    _aspetta(300)
-    appunti.ripristina(salvati)
+        _aspetta(300)
+        appunti.ripristina(salvati)
+    except Exception as e:
+        appunti.ripristina(salvati)
+        avvisa(f"Errore durante l'invio: {e}")

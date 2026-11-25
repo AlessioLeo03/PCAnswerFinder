@@ -27,6 +27,7 @@ class Programma:
     def __init__(self, app: QApplication) -> None:
         self.app = app
         self.sessione: Sessione | None = None
+        self._invio_in_corso = False
         self.icona = QSystemTrayIcon(_icona())
         self.icona.setToolTip(f"{TITOLO} — tieni premuto Win")
         self.menu = QMenu()
@@ -44,7 +45,7 @@ class Programma:
         self.icona.showMessage(TITOLO, testo)
 
     def apri(self) -> None:
-        if self.sessione is not None:
+        if self.sessione is not None or self._invio_in_corso:
             return
         try:
             s = Sessione(cattura.fotografa(), elementi.rett_elemento)
@@ -61,9 +62,19 @@ class Programma:
         self.sessione = None
 
     def _invia(self, png: bytes, messaggio: str) -> None:
+        if self._invio_in_corso:
+            return
         if self.sessione is not None:
             self.sessione.chiudi()
-        QTimer.singleShot(80, lambda: invio_claude.invia(png, messaggio, self.avvisa))
+        self._invio_in_corso = True
+
+        def _esegui() -> None:
+            try:
+                invio_claude.invia(png, messaggio, self.avvisa)
+            finally:
+                self._invio_in_corso = False
+
+        QTimer.singleShot(80, _esegui)
 
     def _copia(self, testo: str) -> None:
         if self.sessione is not None:
