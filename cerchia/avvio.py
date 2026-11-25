@@ -21,6 +21,8 @@ NOME_RUN = "CerchiaEChiedi"
 
 
 def _comando_avvio() -> str:
+    if getattr(sys, "frozen", False):  # versione installata con il Setup: un solo .exe
+        return f'"{sys.executable}"'
     pythonw = Path(sys.executable).with_name("pythonw.exe")
     script = Path(__file__).resolve().parent.parent / "avvia.pyw"
     return f'"{pythonw}" "{script}"'

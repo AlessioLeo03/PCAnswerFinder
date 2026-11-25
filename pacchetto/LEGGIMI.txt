@@ -1,0 +1,34 @@
+CERCHIA E CHIEDI
+"Cerchia e cerca" di Android, ma su PC e con Claude.
+
+COSA SERVE
+- Windows 10 o 11 a 64 bit.
+- L'app desktop di Claude installata e con l'accesso fatto (https://claude.ai/download).
+
+COME SI USA
+1. Tieni premuto il tasto Win per mezzo secondo: lo schermo si ferma.
+2. Con il mouse:
+   - cerchia o scarabocchia una zona;
+   - trascina sopra un testo per evidenziarlo;
+   - fai clic su un elemento (finestra, pulsante, immagine).
+3. Scrivi la domanda nella barra in basso e premi Invio.
+   La selezione arriva a Claude insieme alla domanda.
+   - Traduci: chiede a Claude di tradurre il testo dell'immagine in italiano.
+   - Copia testo: copia negli appunti il testo selezionato.
+   - Menu accanto alla freccia: scegli se usare una chat nuova, la chat aperta
+     oppure cercare una chat per titolo.
+4. Esc chiude senza inviare.
+
+Una pressione breve di Win apre il menu Start come sempre; Win+E, Win+D ecc. funzionano come prima.
+
+ICONA VICINO ALL'OROLOGIO
+Cerchio arancione. Clic destro: "Avvia con Windows" (attiva/disattiva) ed "Esci".
+
+LIMITI
+- Sopra i programmi avviati come amministratore il tasto Win non viene intercettato.
+- Durante l'invio il programma usa gli appunti e poi li ripristina (testo, immagini, HTML).
+- "Cerca chat" propone le chat visibili nella barra laterale dell'app di Claude e quelle già cercate.
+
+PROBLEMI
+Gli errori vengono scritti in %LOCALAPPDATA%\CerchiaEChiedi\errori.log.
+Per disinstallare: Impostazioni > App > App installate > Cerchia e Chiedi > Disinstalla.

@@ -23,3 +23,9 @@ def test_comando_avvio_forma_e_percorsi():
 def test_avvio_automatico_attivo_restituisce_bool():
     # Solo lettura del registro: non scrive nulla.
     assert isinstance(avvio.avvio_automatico_attivo(), bool)
+
+
+def test_comando_avvio_versione_installata(monkeypatch):
+    monkeypatch.setattr(avvio.sys, "frozen", True, raising=False)
+    monkeypatch.setattr(avvio.sys, "executable", r"C:\Programmi\CerchiaEChiedi\CerchiaEChiedi.exe")
+    assert avvio._comando_avvio() == r'"C:\Programmi\CerchiaEChiedi\CerchiaEChiedi.exe"'
