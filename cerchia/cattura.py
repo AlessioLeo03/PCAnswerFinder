@@ -1,5 +1,6 @@
 """Foto di tutti gli schermi in pixel fisici e ritagli PNG (solo in memoria)."""
 import ctypes
+import math
 from ctypes import wintypes
 from dataclasses import dataclass
 
@@ -63,4 +64,7 @@ def png_da_immagine(img: QImage) -> bytes:
 
 
 def ritaglio_png(img: QImage, r: Rett) -> bytes:
-    return png_da_immagine(img.copy(QRect(round(r.x), round(r.y), round(r.w), round(r.h))))
+    x0, y0 = math.floor(r.x), math.floor(r.y)
+    x1, y1 = math.ceil(r.x + r.w), math.ceil(r.y + r.h)
+    area = QRect(x0, y0, x1 - x0, y1 - y0).intersected(img.rect())
+    return png_da_immagine(img.copy(area))

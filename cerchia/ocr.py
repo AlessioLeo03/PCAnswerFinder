@@ -43,6 +43,7 @@ def leggi(png: bytes) -> list[Parola] | None:
 
 
 class LettoreOcr(QObject):
+    # Emesso da un thread di lavoro: collegarlo a un metodo di un QObject (consegna in coda al thread grafico), mai a lambda/funzioni libere che toccano i widget.
     pronto = Signal(object)  # list[Parola] | None
 
     def avvia(self, img: QImage) -> None:

@@ -1,0 +1,25 @@
+import pytest
+from PySide6.QtGui import QColor, QGuiApplication, QImage
+
+from cerchia.cattura import ritaglio_png
+from cerchia.gesti import Rett
+
+
+@pytest.fixture(scope="module")
+def app():
+    return QGuiApplication.instance() or QGuiApplication([])
+
+
+def _dimensioni(app, r):
+    img = QImage(100, 100, QImage.Format_RGB32)
+    img.fill(QColor("white"))
+    out = QImage.fromData(ritaglio_png(img, r), "PNG")
+    return out.width(), out.height()
+
+
+def test_bordi_esatti(app):
+    assert _dimensioni(app, Rett(10.5, 10.5, 10.5, 10.5)) == (11, 11)
+
+
+def test_limitato_all_immagine(app):
+    assert _dimensioni(app, Rett(90, 90, 30, 30)) == (10, 10)
