@@ -244,7 +244,7 @@ class Schermata(QWidget):
         self._aggiorna_pulsanti()
 
     def _aggiorna_pulsanti(self) -> None:
-        self._btn_traduci.setEnabled(self._ocr != "assente")
+        self._btn_traduci.setEnabled(True)
         self._btn_copia.setEnabled(bool(self._sel))
 
     # ---------- barra e avvisi ----------
@@ -273,8 +273,7 @@ class Schermata(QWidget):
     def _invia(self, traduci: bool) -> None:
         if self._riquadro is None:
             return
-        testo = gesti.testo_di(self._sel)
-        messaggio = componi(self._campo.text(), testo, traduci)
+        messaggio = componi(self._campo.text(), traduci)
         png = ritaglio_png(self._foto.immagine, self._riquadro)
         if not png:
             return

@@ -110,11 +110,12 @@ Per cerchio e clic: le parole OCR il cui centro cade dentro il riquadro. Per tes
 
 | Situazione | Testo inviato insieme all'immagine |
 |------------|-------------------------------------|
-| Domanda scritta, nessun testo nella selezione | la domanda |
-| Domanda scritta, testo nella selezione | la domanda + `\n\nTesto selezionato:\n«…»` |
-| Casella vuota | `Cosa c'è in questa immagine? Spiegamelo.` (+ testo selezionato se presente) |
-| Pulsante Traduci, testo presente | `Traduci in italiano questo testo:\n«…»` |
-| Pulsante Traduci, nessun testo | `Traduci in italiano il testo che vedi nell'immagine.` |
+| Domanda scritta | la domanda |
+| Casella vuota | `Cosa c'è in questa immagine? Spiegamelo.` |
+| Pulsante Traduci | `Traduci in italiano il testo che vedi nell'immagine.` |
+
+Come su Android, il testo letto dall'OCR non viene incollato nel messaggio (decisione dell'utente,
+25 novembre 2026): serve solo per evidenziare le parole e per "Copia testo".
 
 L'immagine inviata è sempre il ritaglio del riquadro dalla foto congelata, in PNG, alla risoluzione fisica.
 
@@ -138,7 +139,7 @@ L'immagine inviata è sempre il ritaglio del riquadro dalla foto congelata, in P
 |------|---------------|
 | App di Claude non si apre in 20 s | Immagine negli appunti, notifica "Claude non si è aperto: incolla con Ctrl+V". |
 | Chat nuova non apribile | Incolla nella chat corrente, notifica. |
-| OCR non disponibile (manca la lingua) | Evidenzia testo e Traduci disattivati; cerchio e clic funzionano; messaggio nella barra. |
+| OCR non disponibile (manca la lingua) | Evidenzia testo e Copia testo disattivati; cerchio e clic funzionano; messaggio nella barra. |
 | Clic senza elemento | Lo strato resta aperto, messaggio "Nessun elemento qui, prova a cerchiare". |
 | Programma bloccato o chiuso | Windows rimuove l'hook: Win torna normale. |
 | Finestra in primo piano avviata come amministratore | L'hook non riceve Win: limite noto, documentato. |

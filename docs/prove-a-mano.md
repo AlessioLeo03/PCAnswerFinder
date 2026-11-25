@@ -19,7 +19,8 @@ Avvio: `.\.venv\Scripts\pythonw avvia.pyw` (oppure da "Avvia con Windows").
 ## Invio
 - [ ] Invio → chat nuova in Claude con immagine e domanda, risposta avviata.
 - [ ] Casella vuota → "Cosa c'è in questa immagine? Spiegamelo."
-- [ ] Traduci → "Traduci in italiano questo testo: …".
+- [ ] Traduci → "Traduci in italiano il testo che vedi nell'immagine.", senza testo incollato.
+- [ ] Domanda scritta → arriva solo la domanda con l'immagine, senza "Testo selezionato".
 - [ ] Copia testo → "Testo copiato." e testo negli appunti.
 - [ ] Appunti ripristinati dopo l'invio.
 - [ ] App di Claude chiusa → si apre e riceve la selezione.
