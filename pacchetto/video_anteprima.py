@@ -279,25 +279,168 @@ def cursore(p: QPainter, x: float, y: float, premuto: bool = False) -> None:
     p.restore()
 
 
-def didascalia(p: QPainter, numero: int, testo: str, alfa: float = 1.0) -> None:
+PASSI = [
+    "Tieni premuto il tasto Win",
+    "Cerchia quello che ti serve",
+    "Scrivi la domanda",
+    "Premi Invio",
+    "Claude risponde",
+]
+PANNELLO = 300                       # larghezza del pannello delle istruzioni a sinistra
+SCENA_R = QRectF(PANNELLO, 90, 960, 540)  # dove va lo schermo (1280x720 rimpicciolito al 75 %)
+
+RISPOSTE = {
+    "grafico": (
+        "Ecco il grafico in 3 punti:\n\n"
+        "1. Il Nord guida e cresce ogni trimestre: da 120 a 190 k€ (+58 %).\n\n"
+        "2. Centro e Sud restano stabili, tra 58 e 92 k€, senza una crescita netta.\n\n"
+        "3. T4 è il trimestre migliore per tutte e tre le aree; il totale dell'anno è 1.179 k€."
+    ),
+    "codice": (
+        "KeyError: 'importo' vuol dire che nel CSV non c'è una colonna che si chiama esattamente \"importo\".\n\n"
+        "1. Controlla i nomi delle colonne: print(dati.columns)\n\n"
+        "2. Spesso ci sono spazi o maiuscole diverse (\"Importo \"): normalizzali con\n"
+        "    dati.columns = dati.columns.str.strip().str.lower()\n\n"
+        "3. Poi rilancia: dati[\"importo\"] funzionerà."
+    ),
+}
+
+
+def tasto_win(p: QPainter, centro: QPointF, premuto: float, progresso: float) -> None:
+    """Tasto Win disegnato: premuto (0-1) lo abbassa, progresso (0-1) riempie l'anello del mezzo secondo."""
+    lato = 92
+    giu = 6 * premuto
+    r = QRectF(centro.x() - lato / 2, centro.y() - lato / 2 + giu, lato, lato)
     p.save()
-    p.setOpacity(alfa)
     p.setRenderHint(QPainter.Antialiasing)
-    f = QFont("Segoe UI Semibold", 17)
-    p.setFont(f)
-    larghezza = p.fontMetrics().horizontalAdvance(testo) + 96
-    r = QRectF((L - larghezza) / 2, 24, larghezza, 54)
     p.setPen(Qt.NoPen)
-    p.setBrush(QColor(15, 15, 18, 225))
-    p.drawRoundedRect(r, 27, 27)
-    p.setBrush(ARANCIO)
-    p.drawEllipse(QPointF(r.x() + 30, r.center().y()), 15, 15)
-    p.setPen(QColor("white"))
-    p.setFont(QFont("Segoe UI Semibold", 13))
-    p.drawText(QRectF(r.x() + 15, r.y(), 30, r.height()), Qt.AlignCenter, str(numero))
-    p.setFont(f)
-    p.drawText(QRectF(r.x() + 58, r.y(), r.width() - 70, r.height()), Qt.AlignVCenter, testo)
+    p.setBrush(QColor(0, 0, 0, 120))
+    p.drawRoundedRect(QRectF(r.x(), centro.y() - lato / 2 + 8, lato, lato), 16, 16)
+    p.setBrush(QColor(70 - 15 * premuto, 72 - 15 * premuto, 80 - 15 * premuto))
+    p.drawRoundedRect(r, 16, 16)
+    p.setBrush(QColor(92 - 15 * premuto, 95 - 15 * premuto, 104 - 15 * premuto))
+    p.drawRoundedRect(r.adjusted(6, 5, -6, -9), 12, 12)
+    # logo di Windows: quattro quadrati
+    q, gap = 15, 3
+    c = r.adjusted(6, 5, -6, -9).center()
+    p.setBrush(QColor(120, 190, 255) if premuto > 0.5 else QColor(230, 232, 238))
+    for dx in (-1, 1):
+        for dy in (-1, 1):
+            p.drawRect(QRectF(c.x() + (gap / 2 if dx > 0 else -gap / 2 - q),
+                              c.y() + (gap / 2 if dy > 0 else -gap / 2 - q), q, q))
+    if progresso > 0:
+        p.setPen(QPen(ARANCIO, 5, Qt.SolidLine, Qt.RoundCap))
+        p.setBrush(Qt.NoBrush)
+        anello = r.adjusted(-14, -14 - giu, 14, 14 - giu)
+        p.drawArc(anello, 90 * 16, int(-360 * 16 * min(1.0, progresso)))
     p.restore()
+
+
+def pannello(p: QPainter, attivo: int, extra: dict) -> None:
+    """Colonna a sinistra: nome, i passi con quello attivo evidenziato, il tasto Win nel primo passo."""
+    p.save()
+    p.setRenderHint(QPainter.Antialiasing)
+    p.fillRect(QRectF(0, 0, PANNELLO, A), QColor(20, 20, 24))
+    p.drawImage(QPointF(34, 46), icona_claude(30).toImage())
+    p.setPen(QColor("white"))
+    p.setFont(QFont("Segoe UI Semibold", 17))
+    p.drawText(QPointF(74, 70), "PCAnswerFinder")
+    p.setPen(QColor(150, 150, 158))
+    p.setFont(QFont("Segoe UI", 10))
+    p.drawText(QPointF(36, 100), "Cerchia e chiedi, su PC, con Claude")
+    y = 150
+    for i, testo in enumerate(PASSI, start=1):
+        fatto, ora = i < attivo, i == attivo
+        p.setPen(Qt.NoPen)
+        if ora:
+            p.setBrush(QColor(255, 255, 255, 14))
+            p.drawRoundedRect(QRectF(20, y - 24, PANNELLO - 40, 48), 12, 12)
+        p.setBrush(ARANCIO if ora else QColor(60, 62, 68) if not fatto else QColor(70, 120, 85))
+        p.drawEllipse(QPointF(48, y), 14, 14)
+        p.setPen(QColor("white"))
+        p.setFont(QFont("Segoe UI Semibold", 11))
+        p.drawText(QRectF(34, y - 14, 28, 28), Qt.AlignCenter, "✓" if fatto else str(i))
+        p.setPen(QColor("white") if ora else QColor(170, 170, 178) if fatto else QColor(110, 110, 118))
+        p.setFont(QFont("Segoe UI Semibold" if ora else "Segoe UI", 13))
+        p.drawText(QPointF(74, y + 6), testo)
+        y += 62
+    if attivo == 1:
+        tasto_win(p, QPointF(PANNELLO / 2, 535), extra.get("premuto", 0.0), extra.get("progresso", 0.0))
+        p.setPen(QColor(170, 170, 178))
+        p.setFont(QFont("Segoe UI", 10))
+        p.drawText(QRectF(0, 600, PANNELLO, 22), Qt.AlignCenter, "circa mezzo secondo")
+    p.setPen(QColor(90, 90, 98))
+    p.setFont(QFont("Segoe UI", 8))
+    p.drawText(QRectF(0, A - 34, PANNELLO, 20), Qt.AlignCenter, "Demo ricostruita · dati di esempio")
+    p.restore()
+
+
+def componi(scena: QImage, attivo: int, extra: dict | None = None) -> QImage:
+    """Fotogramma finale: pannello a sinistra e lo schermo rimpicciolito a destra."""
+    img = QImage(L, A, QImage.Format_RGB32)
+    p = QPainter(img)
+    p.setRenderHint(QPainter.Antialiasing)
+    p.setRenderHint(QPainter.SmoothPixmapTransform)
+    g = QLinearGradient(PANNELLO, 0, L, A)
+    g.setColorAt(0, QColor(34, 34, 40))
+    g.setColorAt(1, QColor(22, 22, 27))
+    p.fillRect(img.rect(), g)
+    pannello(p, attivo, extra or {})
+    ombra = SCENA_R.adjusted(-2, 4, 2, 10)
+    p.setPen(Qt.NoPen)
+    p.setBrush(QColor(0, 0, 0, 110))
+    p.drawRoundedRect(ombra, 14, 14)
+    percorso = QPainterPath()
+    percorso.addRoundedRect(SCENA_R, 12, 12)
+    p.setClipPath(percorso)
+    p.drawImage(SCENA_R, scena)
+    p.end()
+    return img
+
+
+def chat_claude_finestra(base: QImage, ritaglio: QImage, domanda: str, risposta: str, mostrati: int,
+                         entrata: float) -> QImage:
+    """Finestra di chat di esempio con la selezione inviata e la risposta che compare man mano."""
+    img = base.copy()
+    p = QPainter(img)
+    p.setRenderHint(QPainter.Antialiasing)
+    p.setRenderHint(QPainter.SmoothPixmapTransform)
+    f = QRectF(170, 30 + (1 - entrata) * 30, 940, 630)
+    p.setOpacity(entrata)
+    p.setPen(Qt.NoPen)
+    p.setBrush(QColor(0, 0, 0, 120))
+    p.drawRoundedRect(f.adjusted(-3, 6, 3, 14), 14, 14)
+    p.setBrush(QColor(38, 38, 36))
+    p.drawRoundedRect(f, 12, 12)
+    p.setBrush(QColor(30, 30, 29))
+    p.drawRoundedRect(QRectF(f.x(), f.y(), f.width(), 40), 12, 12)
+    p.drawRect(QRectF(f.x(), f.y() + 26, f.width(), 14))
+    p.drawImage(QPointF(f.x() + 16, f.y() + 10), icona_claude(20).toImage())
+    p.setPen(QColor(230, 230, 228))
+    p.setFont(QFont("Segoe UI Semibold", 11))
+    p.drawText(QPointF(f.x() + 44, f.y() + 26), "Claude · chat nuova")
+    # messaggio dell'utente: immagine + domanda, a destra
+    p.setFont(QFont("Segoe UI", 13))
+    larghezza = int(min(460, max(300, p.fontMetrics().horizontalAdvance(domanda) + 8)))
+    alt = ritaglio.height() * larghezza / ritaglio.width()
+    m = QRectF(f.right() - larghezza - 40, f.y() + 62, larghezza + 24, alt + 64)
+    p.setBrush(QColor(55, 55, 52))
+    p.drawRoundedRect(m, 14, 14)
+    p.drawImage(QRectF(m.x() + 12, m.y() + 12, larghezza, alt), ritaglio)
+    p.setPen(QColor(240, 240, 238))
+    p.setFont(QFont("Segoe UI", 12))
+    p.drawText(QRectF(m.x() + 14, m.y() + alt + 20, larghezza, 30), Qt.AlignLeft | Qt.AlignVCenter, domanda)
+    # risposta
+    y0 = m.bottom() + 26
+    p.drawImage(QPointF(f.x() + 36, y0 + 2), icona_claude(24).toImage())
+    testo = risposta[:mostrati]
+    if mostrati < len(risposta):
+        testo += " ▍"
+    p.setPen(QColor(236, 236, 232))
+    p.setFont(QFont("Segoe UI", 13))
+    p.drawText(QRectF(f.x() + 76, y0, f.width() - 130, f.bottom() - y0 - 20), Qt.TextWordWrap | Qt.AlignTop, testo)
+    p.end()
+    return img
 
 
 def finale(t: float) -> QImage:
@@ -359,70 +502,67 @@ def fotogrammi():
         img = s.grab().toImage().convertToFormat(QImage.Format_RGB32)
         if img.width() != L:
             img = img.scaled(L, A, Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
-        img.setDevicePixelRatio(1.0)  # si disegna cursore e didascalie in pixel del video
+        img.setDevicePixelRatio(1.0)  # si disegna il cursore in pixel dello schermo
         return img
 
-    def con(img, mouse, numero=None, testo="", alfa=1.0, premuto=False):
-        p = QPainter(img)
-        p.setRenderHint(QPainter.Antialiasing)
-        if numero:
-            didascalia(p, numero, testo, alfa)
+    def con(img, mouse, premuto=False):
         if mouse:
+            p = QPainter(img)
+            p.setRenderHint(QPainter.Antialiasing)
             cursore(p, *mouse, premuto=premuto)
-        p.end()
+            p.end()
         return img
 
     mouse = (900, 260)
-    # 1) desktop con l'errore, poi "tieni premuto Win"
-    for i in range(45):
-        yield con(base.copy(), mouse, 1 if i > 12 else None, "Tieni premuto il tasto Win", min(1, (i - 12) / 8))
-    # 2) lo schermo si ferma: buio + onda di luce
+    # 1) desktop, poi il tasto Win si abbassa e l'anello si riempie
+    for i in range(24):
+        yield componi(con(base.copy(), mouse), 1)
+    for i in range(24):
+        premuto = min(1.0, i / 4)
+        yield componi(con(base.copy(), mouse), 1, {"premuto": premuto, "progresso": i / 18})
+    # 2) lo schermo si ferma: buio + onda di luce (il tasto si rilascia)
     for i in range(36):
         s._imposta_buio(min(1.0, i / 6))
         s._imposta_luce(-0.3 + 1.6 * i / 35)
-        yield con(strato(), mouse, 1, "Tieni premuto il tasto Win")
+        yield componi(con(strato(), mouse), 1, {"premuto": max(0.0, 1 - i / 6), "progresso": 1.0 if i < 10 else 0})
     s._imposta_luce(-1.0)
-    # 3) suggerimento d'uso
+    # 3) suggerimento d'uso del programma
     s._mostra_suggerimento()
     # l'animazione vera andrebbe a tempo reale e litigherebbe con l'opacità impostata qui fotogramma per fotogramma
     s._anim_sugg.stop()
     s._anim_sugg.valueChanged.disconnect()
     for i in range(30):
         s._opacita.setOpacity(min(1.0, i / 8))
-        # qui parla il suggerimento del programma: niente didascalia sopra
-        yield con(strato(), interpola(mouse, punto_cerchio(0), i / 29))
-    s._anim_sugg.stop()
-    # 4) cerchio attorno all'errore
-    inizio = punto_cerchio(0)
-    evento(s, QEvent.MouseButtonPress, *inizio)
+        yield componi(con(strato(), interpola(mouse, punto_cerchio(0), i / 29)), 2)
+    # 4) cerchio
+    evento(s, QEvent.MouseButtonPress, *punto_cerchio(0))
     passi = 60
     for i in range(1, passi + 1):
         pt = punto_cerchio(i / passi)
         evento(s, QEvent.MouseMove, *pt)
-        yield con(strato(), pt, 2, "Cerchia quello che ti serve", min(1, i / 6), premuto=True)
+        yield componi(con(strato(), pt, premuto=True), 2)
     evento(s, QEvent.MouseButtonRelease, *punto_cerchio(1))
     s._avviso.hide()
     fine_cerchio = punto_cerchio(1)
-    for i in range(18):
-        yield con(strato(), fine_cerchio, 2, "Cerchia quello che ti serve")
+    for i in range(16):
+        yield componi(con(strato(), fine_cerchio), 2)
     # 5) domanda
     domanda = DOMANDE[SCENA]
     campo = s._barra.campo
     pos_campo = campo.mapTo(s, campo.rect().center())
     verso_campo = (pos_campo.x() - 60, pos_campo.y() + 8)
-    for i in range(14):
-        yield con(strato(), interpola(fine_cerchio, verso_campo, i / 13), 3, "Scrivi la domanda", min(1, i / 6))
+    for i in range(12):
+        yield componi(con(strato(), interpola(fine_cerchio, verso_campo, i / 11)), 3)
     for i in range(len(domanda) + 1):
         campo.setText(domanda[:i])
-        for _ in range(2 if i < len(domanda) else 20):
-            yield con(strato(), verso_campo, 3, "Scrivi la domanda")
+        for _ in range(2 if i < len(domanda) else 14):
+            yield componi(con(strato(), verso_campo), 3)
     # 6) invio
     btn = s._barra.btn_invia
     centro = btn.mapTo(s, btn.rect().center())
     pos_btn = (centro.x() + 2, centro.y() + 4)
-    for i in range(16):
-        yield con(strato(), interpola(verso_campo, pos_btn, i / 15), 4, "Invio: la selezione va a Claude",
-                  min(1, i / 6))
+    for i in range(14):
+        yield componi(con(strato(), interpola(verso_campo, pos_btn, i / 13)), 4)
     for i in range(10):
         img = strato()
         p = QPainter(img)
@@ -431,11 +571,25 @@ def fotogrammi():
         p.setBrush(Qt.NoBrush)
         p.drawEllipse(QPointF(centro.x(), centro.y()), 22 + i * 3, 22 + i * 3)
         p.end()
-        yield con(img, pos_btn, 4, "Invio: la selezione va a Claude", premuto=i < 4)
-    # 7) chiusura con nome e link
-    for i in range(int(FPS * 3.2)):
-        yield finale(i / FPS)
+        yield componi(con(img, pos_btn, premuto=i < 4), 4)
+    # 7) la chat si apre con la selezione e la risposta compare man mano
+    riquadro = s._riquadro
+    ritaglio = base.copy(int(riquadro.x), int(riquadro.y), int(riquadro.w), int(riquadro.h))
     s.close()
+    risposta = RISPOSTE[SCENA]
+    for i in range(14):
+        yield componi(chat_claude_finestra(base, ritaglio, domanda, risposta, 0, i / 13), 5)
+    for i in range(12):  # "sta pensando"
+        yield componi(chat_claude_finestra(base, ritaglio, domanda, risposta, 0, 1.0), 5)
+    mostrati = 0
+    while mostrati < len(risposta):
+        mostrati = min(len(risposta), mostrati + 4)
+        yield componi(chat_claude_finestra(base, ritaglio, domanda, risposta, mostrati, 1.0), 5)
+    for i in range(int(FPS * 2.2)):
+        yield componi(chat_claude_finestra(base, ritaglio, domanda, risposta, mostrati, 1.0), 5)
+    # 8) chiusura con nome e link
+    for i in range(int(FPS * 3)):
+        yield finale(i / FPS)
 
 
 def main() -> None:
