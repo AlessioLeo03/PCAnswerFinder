@@ -1,4 +1,4 @@
-"""Costanti regolabili di Cerchia e Chiedi."""
+"""Costanti regolabili di PCAnswerFinder."""
 
 # Programma che apre l'app desktop di Claude
 CLAUDE_EXE = r"%LOCALAPPDATA%\AnthropicClaude\claude.exe"

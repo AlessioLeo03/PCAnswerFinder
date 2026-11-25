@@ -1,4 +1,4 @@
-"""Avvio di Cerchia e Chiedi: icona di notifica e collegamento dei pezzi."""
+"""Avvio di PCAnswerFinder: icona di notifica e collegamento dei pezzi."""
 import logging
 import os
 import sys
@@ -10,14 +10,15 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from cerchia import appunti, cattura, chat_claude, elementi, invio_claude
+from cerchia import appunti, cattura, chat_claude, destinazione, elementi, invio_claude
 from cerchia.destinazione import Destinazione
 from cerchia.schermata import Sessione
 from cerchia.tasto_win import TastoWin
 
-TITOLO = "Cerchia e Chiedi"
+TITOLO = "PCAnswerFinder"
 CHIAVE_RUN = r"Software\Microsoft\Windows\CurrentVersion\Run"
-NOME_RUN = "CerchiaEChiedi"
+NOME_RUN = "PCAnswerFinder"
+NOME_RUN_VECCHIO = "CerchiaEChiedi"
 
 
 def _comando_avvio() -> str:
@@ -48,6 +49,20 @@ def imposta_avvio_automatico(attivo: bool) -> None:
                 pass
 
 
+def migra_nome_vecchio() -> None:
+    """Il programma prima si chiamava "Cerchia e Chiedi": sposta il suo avvio automatico sul nome nuovo."""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, CHIAVE_RUN, 0,
+                            winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE) as k:
+            winreg.QueryValueEx(k, NOME_RUN_VECCHIO)
+            winreg.DeleteValue(k, NOME_RUN_VECCHIO)
+            winreg.SetValueEx(k, NOME_RUN, 0, winreg.REG_SZ, _comando_avvio())
+    except FileNotFoundError:
+        pass
+    except OSError:
+        logging.exception("migrazione dell'avvio automatico")
+
+
 def _icona() -> QIcon:
     pix = QPixmap(64, 64)
     pix.fill(Qt.transparent)
@@ -64,6 +79,8 @@ class Programma:
         self.app = app
         self.sessione: Sessione | None = None
         self._invio_in_corso = False
+        migra_nome_vecchio()
+        destinazione.migra_vecchie_impostazioni()
         self.icona = QSystemTrayIcon(_icona())
         self.icona.setToolTip(f"{TITOLO} — tieni premuto Win")
         self.menu = QMenu()
@@ -131,7 +148,7 @@ class Programma:
 
 
 def _configura_log() -> None:
-    cartella = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "CerchiaEChiedi"
+    cartella = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "PCAnswerFinder"
     try:
         cartella.mkdir(parents=True, exist_ok=True)
         logging.basicConfig(filename=str(cartella / "errori.log"), level=logging.WARNING, encoding="utf-8",

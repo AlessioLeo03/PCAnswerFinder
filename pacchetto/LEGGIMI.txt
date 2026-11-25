@@ -1,4 +1,4 @@
-CERCHIA E CHIEDI
+PCANSWERFINDER
 "Cerchia e cerca" di Android, ma su PC e con Claude.
 
 COSA SERVE
@@ -30,5 +30,5 @@ LIMITI
 - "Cerca chat" propone le chat visibili nella barra laterale dell'app di Claude e quelle già cercate.
 
 PROBLEMI
-Gli errori vengono scritti in %LOCALAPPDATA%\CerchiaEChiedi\errori.log.
-Per disinstallare: Impostazioni > App > App installate > Cerchia e Chiedi > Disinstalla.
+Gli errori vengono scritti in %LOCALAPPDATA%\PCAnswerFinder\errori.log.
+Per disinstallare: Impostazioni > App > App installate > PCAnswerFinder > Disinstalla.

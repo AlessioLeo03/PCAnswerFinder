@@ -1,4 +1,4 @@
-# Prove a mano — Cerchia e Chiedi
+# Prove a mano — PCAnswerFinder
 
 Avvio: `.\.venv\Scripts\pythonw avvia.pyw` (oppure da "Avvia con Windows").
 
@@ -36,7 +36,7 @@ Avvio: `.\.venv\Scripts\pythonw avvia.pyw` (oppure da "Avvia con Windows").
 - [ ] Togli la spunta: dopo il riavvio non parte.
 
 ## Errori
-- [ ] Il file %LOCALAPPDATA%\CerchiaEChiedi\errori.log raccoglie gli errori (se ce ne sono).
+- [ ] Il file %LOCALAPPDATA%\PCAnswerFinder\errori.log raccoglie gli errori (se ce ne sono).
 
 ## Limiti noti
 - Sopra programmi avviati come amministratore il tasto Win non viene intercettato.

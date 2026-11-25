@@ -1,4 +1,4 @@
-# Cerchia e Chiedi — Specifica
+# PCAnswerFinder — Specifica
 
 Data: 25 novembre 2026
 Stato: in revisione
@@ -162,7 +162,7 @@ L'immagine inviata è sempre il ritaglio del riquadro dalla foto congelata, in P
 5. `ocr.py` + evidenzia testo + Copia testo + Traduci.
 6. `elementi.py` + clic.
 7. `invio_claude.py` + `appunti.py`.
-8. "Avvia con Windows" (voce `CerchiaEChiedi` in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`).
+8. "Avvia con Windows" (voce `PCAnswerFinder` in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`).
 
 ## 10. Prove
 

@@ -1,4 +1,4 @@
-# Cerchia e Chiedi (PCAnswerFinder)
+# PCAnswerFinder
 
 "Cerchia e cerca" di Android, ma su PC Windows e con Claude: tieni premuto **Win**, cerchia qualcosa sullo
 schermo, scrivi una domanda e la selezione arriva all'app desktop di Claude.
@@ -6,14 +6,14 @@ schermo, scrivi una domanda e la selezione arriva all'app desktop di Claude.
 ## Installazione (per i colleghi)
 
 1. Serve l'app desktop di Claude installata e con l'accesso fatto: https://claude.ai/download
-2. Avvia `CerchiaEChiedi-Setup-<versione>.exe`.
-   - Non servono permessi di amministratore: il programma va in `%LOCALAPPDATA%\Programs\CerchiaEChiedi`.
+2. Avvia `PCAnswerFinder-Setup-<versione>.exe`.
+   - Non servono permessi di amministratore: il programma va in `%LOCALAPPDATA%\Programs\PCAnswerFinder`.
    - Se Windows mostra "Windows ha protetto il PC", clicca **Ulteriori informazioni** e poi **Esegui comunque**
      (l'installatore non è firmato digitalmente).
-3. Lascia la spunta su "Avvia Cerchia e Chiedi insieme a Windows" e completa l'installazione.
+3. Lascia la spunta su "Avvia PCAnswerFinder insieme a Windows" e completa l'installazione.
 4. Vicino all'orologio compare un cerchio arancione: il programma è attivo.
 
-Disinstallazione: Impostazioni > App > App installate > Cerchia e Chiedi > Disinstalla.
+Disinstallazione: Impostazioni > App > App installate > PCAnswerFinder > Disinstalla.
 
 ## Uso
 
@@ -26,7 +26,7 @@ Disinstallazione: Impostazioni > App > App installate > Cerchia e Chiedi > Disin
     presenti nella barra laterale dell'app di Claude.
 - **Esc** chiude senza inviare. Una pressione breve di Win apre Start come sempre.
 
-Gli errori vengono scritti in `%LOCALAPPDATA%\CerchiaEChiedi\errori.log`.
+Gli errori vengono scritti in `%LOCALAPPDATA%\PCAnswerFinder\errori.log`.
 
 ## Sviluppo
 
@@ -45,5 +45,5 @@ Serve Inno Setup 6 (`winget install JRSoftware.InnoSetup --source winget --scope
 .\pacchetto\costruisci.ps1 -Versione 1.0.0
 ```
 
-Il risultato è `dist\CerchiaEChiedi-Setup-1.0.0.exe` (prove automatiche, PyInstaller, Inno Setup).
+Il risultato è `dist\PCAnswerFinder-Setup-1.0.0.exe` (prove automatiche, PyInstaller, Inno Setup).
 Documentazione: [specifica](docs/specifica.md), [prove a mano](docs/prove-a-mano.md).

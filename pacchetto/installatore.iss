@@ -1,8 +1,8 @@
-; Installatore di Cerchia e Chiedi (Inno Setup 6).
-; Si costruisce con pacchetto\costruisci.ps1, che prima prepara dist\CerchiaEChiedi con PyInstaller.
+; Installatore di PCAnswerFinder (Inno Setup 6).
+; Si costruisce con pacchetto\costruisci.ps1, che prima prepara dist\PCAnswerFinder con PyInstaller.
 
-#define Nome "Cerchia e Chiedi"
-#define Exe "CerchiaEChiedi.exe"
+#define Nome "PCAnswerFinder"
+#define Exe "PCAnswerFinder.exe"
 #ifndef Versione
   #define Versione "1.0.0"
 #endif
@@ -13,12 +13,12 @@ AppName={#Nome}
 AppVersion={#Versione}
 AppPublisher=PCAnswerFinder
 AppPublisherURL=https://github.com/AlessioLeo03/PCAnswerFinder
-DefaultDirName={localappdata}\Programs\CerchiaEChiedi
+DefaultDirName={localappdata}\Programs\PCAnswerFinder
 DefaultGroupName={#Nome}
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 OutputDir=..\dist
-OutputBaseFilename=CerchiaEChiedi-Setup-{#Versione}
+OutputBaseFilename=PCAnswerFinder-Setup-{#Versione}
 SetupIconFile=icona.ico
 UninstallDisplayIcon={app}\{#Exe}
 Compression=lzma2/max
@@ -33,11 +33,11 @@ ShowLanguageDialog=no
 Name: "italiano"; MessagesFile: "compiler:Languages\Italian.isl"
 
 [Tasks]
-Name: "avvioautomatico"; Description: "Avvia Cerchia e Chiedi insieme a Windows"; GroupDescription: "Opzioni:"
+Name: "avvioautomatico"; Description: "Avvia PCAnswerFinder insieme a Windows"; GroupDescription: "Opzioni:"
 Name: "desktop"; Description: "Crea un collegamento sul desktop"; GroupDescription: "Opzioni:"; Flags: unchecked
 
 [Files]
-Source: "..\dist\CerchiaEChiedi\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\PCAnswerFinder\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "LEGGIMI.txt"; DestDir: "{app}"; Flags: ignoreversion isreadme
 
 [Icons]
@@ -45,11 +45,13 @@ Name: "{autoprograms}\{#Nome}"; Filename: "{app}\{#Exe}"
 Name: "{autodesktop}\{#Nome}"; Filename: "{app}\{#Exe}"; Tasks: desktop
 
 [Registry]
+; Vecchio nome del programma (Cerchia e Chiedi): via il suo avvio automatico
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: "CerchiaEChiedi"; ValueType: none; Flags: deletevalue
 ; Stesso valore usato dalla voce "Avvia con Windows" dell'icona di notifica
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "CerchiaEChiedi"; ValueData: """{app}\{#Exe}"""; Flags: uninsdeletevalue; Tasks: avvioautomatico
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "PCAnswerFinder"; ValueData: """{app}\{#Exe}"""; Flags: uninsdeletevalue; Tasks: avvioautomatico
 
 [Run]
-Filename: "{app}\{#Exe}"; Description: "Avvia Cerchia e Chiedi adesso"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#Exe}"; Description: "Avvia PCAnswerFinder adesso"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM {#Exe}"; Flags: runhidden; RunOnceId: "ChiudiProgramma"
@@ -67,6 +69,6 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if (CurStep = ssPostInstall) and (not ClaudePresente()) and (not WizardSilent()) then
     MsgBox('Non trovo l''app desktop di Claude su questo PC.' + #13#10 +
-           'Cerchia e Chiedi manda le selezioni all''app di Claude: installala da https://claude.ai/download ' +
+           'PCAnswerFinder manda le selezioni all''app di Claude: installala da https://claude.ai/download ' +
            'e accedi con il tuo account.', mbInformation, MB_OK);
 end;

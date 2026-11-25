@@ -27,5 +27,5 @@ def test_avvio_automatico_attivo_restituisce_bool():
 
 def test_comando_avvio_versione_installata(monkeypatch):
     monkeypatch.setattr(avvio.sys, "frozen", True, raising=False)
-    monkeypatch.setattr(avvio.sys, "executable", r"C:\Programmi\CerchiaEChiedi\CerchiaEChiedi.exe")
-    assert avvio._comando_avvio() == r'"C:\Programmi\CerchiaEChiedi\CerchiaEChiedi.exe"'
+    monkeypatch.setattr(avvio.sys, "executable", r"C:\Programmi\PCAnswerFinder\PCAnswerFinder.exe")
+    assert avvio._comando_avvio() == r'"C:\Programmi\PCAnswerFinder\PCAnswerFinder.exe"'

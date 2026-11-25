@@ -1,4 +1,4 @@
-# Costruisce dist\CerchiaEChiedi-Setup-<versione>.exe
+# Costruisce dist\PCAnswerFinder-Setup-<versione>.exe
 # Uso (dalla cartella del progetto):  .\pacchetto\costruisci.ps1 [-Versione 1.0.0]
 # tkinter è escluso: non serve e i dati di Tcl contengono un file con un nome vietato su questa rete.
 param([string]$Versione = "1.0.0")
@@ -24,7 +24,7 @@ if ($LASTEXITCODE -ne 0) { throw "Icona non creata" }
 
 Write-Host "3/4 PyInstaller"
 & $python -m PyInstaller --noconfirm --clean --windowed --onedir `
-    --name CerchiaEChiedi `
+    --name PCAnswerFinder `
     --icon (Join-Path $radice "pacchetto\icona.ico") `
     --distpath dist --workpath build\pyinstaller --specpath build `
     --collect-all uiautomation `
@@ -37,4 +37,4 @@ Write-Host "4/4 Inno Setup"
 & $iscc "/DVersione=$Versione" pacchetto\installatore.iss
 if ($LASTEXITCODE -ne 0) { throw "Inno Setup non riuscito" }
 
-Get-Item "dist\CerchiaEChiedi-Setup-$Versione.exe" | Select-Object FullName, @{n = "MB"; e = { [math]::Round($_.Length / 1MB, 1) } }
+Get-Item "dist\PCAnswerFinder-Setup-$Versione.exe" | Select-Object FullName, @{n = "MB"; e = { [math]::Round($_.Length / 1MB, 1) } }

@@ -26,7 +26,18 @@ class Destinazione:
 
 
 def _impostazioni() -> QSettings:
-    return QSettings("CerchiaEChiedi", "CerchiaEChiedi")
+    return QSettings("PCAnswerFinder", "PCAnswerFinder")
+
+
+def migra_vecchie_impostazioni(nuove: QSettings | None = None, vecchie: QSettings | None = None) -> None:
+    """Copia le scelte salvate con il vecchio nome "CerchiaEChiedi", se col nome nuovo non c'è ancora niente."""
+    nuove = nuove or _impostazioni()
+    vecchie = vecchie or QSettings("CerchiaEChiedi", "CerchiaEChiedi")
+    if nuove.allKeys() or not vecchie.allKeys():
+        return
+    for chiave in vecchie.allKeys():
+        nuove.setValue(chiave, vecchie.value(chiave))
+    nuove.sync()
 
 
 def carica(qs: QSettings | None = None) -> Destinazione:

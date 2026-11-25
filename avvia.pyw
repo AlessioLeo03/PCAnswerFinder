@@ -1,4 +1,4 @@
-"""Avvia Cerchia e Chiedi senza finestra della console."""
+"""Avvia PCAnswerFinder senza finestra della console."""
 import sys
 from pathlib import Path
 

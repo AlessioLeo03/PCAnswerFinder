@@ -2,7 +2,7 @@
 import ctypes
 from ctypes import wintypes
 
-MARCA = 0x43434843  # valore in dwExtraInfo dei tasti inviati da Cerchia e Chiedi
+MARCA = 0x43434843  # valore in dwExtraInfo dei tasti inviati da PCAnswerFinder
 
 INPUT_KEYBOARD = 1
 KEYEVENTF_EXTENDEDKEY = 0x0001

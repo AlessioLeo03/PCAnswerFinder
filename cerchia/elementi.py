@@ -20,7 +20,7 @@ _user32.SetLayeredWindowAttributes.argtypes = [wintypes.HWND, wintypes.COLORREF,
 def rett_elemento(x: int, y: int, da_ignorare: list[int]) -> Rett | None:
     """Rettangolo (pixel fisici del desktop) dell'elemento sotto (x, y).
 
-    Le finestre in da_ignorare (gli strati di Cerchia e Chiedi) diventano trasparenti ai clic
+    Le finestre in da_ignorare (gli strati di PCAnswerFinder) diventano trasparenti ai clic
     per il tempo della ricerca, così UI Automation vede cosa c'è sotto.
     """
     import uiautomation as auto  # importato tardi: dopo che Qt ha impostato la gestione DPI

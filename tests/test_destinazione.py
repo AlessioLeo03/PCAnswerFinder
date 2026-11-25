@@ -58,3 +58,15 @@ def test_cerca_senza_titolo_non_valida():
 
 def test_unisci_senza_doppioni():
     assert destinazione.unisci(["A", "b"], ["B", "c"], ["a"]) == ["A", "b", "c"]
+
+
+def test_migra_vecchie_impostazioni(tmp_path):
+    vecchie = QSettings(str(tmp_path / "vecchie.ini"), QSettings.IniFormat)
+    destinazione.salva(Destinazione(CERCA, "Uno"), vecchie)
+    nuove = _qs(tmp_path)
+    destinazione.migra_vecchie_impostazioni(nuove, vecchie)
+    assert destinazione.carica(nuove) == Destinazione(CERCA, "Uno")
+    assert destinazione.recenti(nuove) == ["Uno"]
+    destinazione.salva(Destinazione(NUOVA, ""), vecchie)
+    destinazione.migra_vecchie_impostazioni(nuove, vecchie)  # non sovrascrive
+    assert destinazione.carica(nuove).modo == CERCA
