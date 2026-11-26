@@ -3,6 +3,7 @@ import ctypes
 import os
 import subprocess
 import time
+import winreg
 from collections.abc import Callable
 from ctypes import wintypes
 
@@ -53,6 +54,23 @@ def _percorso_processo(hwnd: int) -> str:
         return ""
     finally:
         _kernel32.CloseHandle(h)
+
+
+_PACCHETTI = (r"Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion"
+              r"\AppModel\Repository\Packages")
+
+
+def claude_store_installato() -> bool:
+    """True se la versione Microsoft Store di Claude e' registrata per l'utente."""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _PACCHETTI) as chiave:
+            i = 0
+            while True:
+                if winreg.EnumKey(chiave, i).lower().startswith("claude_"):
+                    return True
+                i += 1
+    except OSError:  # chiave assente o fine dell'elenco
+        return False
 
 
 def e_app_claude(percorso: str) -> bool:
@@ -127,7 +145,7 @@ def invia(png: bytes, testo: str, avvisa: Callable[[str], None],
         try:
             if os.path.exists(programma):
                 subprocess.Popen([programma])
-            else:
+            elif claude_store_installato():
                 # Versione del Microsoft Store: si avvia dal suo AppUserModelID
                 subprocess.Popen(["explorer.exe", impostazioni.CLAUDE_STORE_APPID])
         except OSError:

@@ -79,3 +79,7 @@ def test_cerca_chat_usa_ctrl_k_e_titolo(app, monkeypatch):
 ])
 def test_e_app_claude(percorso, atteso):
     assert invio_claude.e_app_claude(percorso) is atteso
+
+
+def test_claude_store_installato_e_bool():
+    assert isinstance(invio_claude.claude_store_installato(), bool)
