@@ -2,6 +2,8 @@
 
 # Programma che apre l'app desktop di Claude
 CLAUDE_EXE = r"%LOCALAPPDATA%\AnthropicClaude\claude.exe"
+# Se manca l'installer classico, avvio della versione del Microsoft Store
+CLAUDE_STORE_APPID = r"shell:AppsFolder\Claude_pzs8sxrjxfjjc!Claude"
 
 # Come aprire una chat nuova nell'app di Claude (deciso nel Task 2 del piano):
 #   ("tasti", [codici VK in ordine di pressione])
