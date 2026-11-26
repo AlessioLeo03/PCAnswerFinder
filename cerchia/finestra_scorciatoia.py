@@ -3,8 +3,8 @@ from dataclasses import replace
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QSlider, QVBoxLayout,
-                               QWidget)
+from PySide6.QtWidgets import (QDialog, QHBoxLayout, QLabel, QLayout, QMessageBox, QPushButton, QSlider,
+                               QVBoxLayout, QWidget)
 
 from cerchia import scorciatoia
 from cerchia.scorciatoia import PREDEFINITA, Scorciatoia
@@ -12,6 +12,7 @@ from cerchia.scorciatoia import PREDEFINITA, Scorciatoia
 MSG_NON_VALIDA = ("Questa non è una scorciatoia: premi un solo tasto (da tenere premuto) oppure tieni "
                   "premuti Ctrl, Alt, Maiusc o Win e poi un altro tasto.")
 IN_ASCOLTO = "Premi la scorciatoia…"
+LARGHEZZA = 452  # larghezza del contenuto: i testi lunghi vanno a capo invece di essere tagliati
 
 STILE = """
 QDialog { background: rgb(32, 33, 36); }
@@ -40,11 +41,12 @@ class FinestraScorciatoia(QDialog):
         if icona is not None:
             self.setWindowIcon(icona)
         self.setStyleSheet(STILE)
-        self.setMinimumWidth(460)
         self._tasto = tasto
         self._scelta = attuale
 
         colonna = QVBoxLayout(self)
+        # la finestra prende sempre l'altezza che serve (avviso sì/no, cursore sì/no): niente testo tagliato
+        colonna.setSizeConstraint(QLayout.SetFixedSize)
         colonna.setContentsMargins(24, 22, 24, 20)
         colonna.setSpacing(12)
         titolo = QLabel("Scorciatoia per aprire PCAnswerFinder")
@@ -52,9 +54,11 @@ class FinestraScorciatoia(QDialog):
         spiegazione = QLabel("Clicca il riquadro e premi la scorciatoia che vuoi. Un solo tasto si attiva "
                              "tenendolo premuto; con Ctrl, Alt, Maiusc o Win si crea una combinazione.")
         spiegazione.setWordWrap(True)
+        spiegazione.setFixedWidth(LARGHEZZA)
         self.btn_registra = QPushButton()
         self.btn_registra.setObjectName("registra")
         self.btn_registra.setCursor(Qt.PointingHandCursor)
+        self.btn_registra.setMinimumHeight(76)
         self.btn_registra.clicked.connect(self._inizia)
 
         self._riga_soglia = QWidget()
@@ -70,6 +74,7 @@ class FinestraScorciatoia(QDialog):
         self.avviso = QLabel()
         self.avviso.setObjectName("avviso")
         self.avviso.setWordWrap(True)
+        self.avviso.setFixedWidth(LARGHEZZA)
 
         pulsanti = QHBoxLayout()
         self.btn_predefinita = QPushButton("Ripristina predefinita")
