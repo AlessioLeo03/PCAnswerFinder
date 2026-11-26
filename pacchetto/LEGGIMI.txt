@@ -22,7 +22,10 @@ COME SI USA
 Una pressione breve di Win apre il menu Start come sempre; Win+E, Win+D ecc. funzionano come prima.
 
 ICONA VICINO ALL'OROLOGIO
-Cerchio arancione. Clic destro: "Avvia con Windows" (attiva/disattiva) ed "Esci".
+Cerchio arancione. Clic destro:
+- "Scorciatoia...": scegli i tasti per aprire PCAnswerFinder. Clicca il riquadro e premi la
+  combinazione che vuoi (es. Ctrl + Maiusc + Q). Un tasto da solo si attiva tenendolo premuto.
+- "Avvia con Windows" (attiva/disattiva) ed "Esci".
 
 LIMITI
 - Sopra i programmi avviati come amministratore il tasto Win non viene intercettato.

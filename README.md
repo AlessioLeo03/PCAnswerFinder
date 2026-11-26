@@ -25,6 +25,8 @@ Disinstallazione: Impostazioni > App > App installate > PCAnswerFinder > Disinst
   - Menu accanto alla freccia: **Chat nuova**, **Chat aperta** oppure **Cerca chat…** con l'elenco delle chat
     presenti nella barra laterale dell'app di Claude.
 - **Esc** chiude senza inviare. Una pressione breve di Win apre Start come sempre.
+- **Scorciatoia personalizzata**: clic destro sull'icona > **Scorciatoia…**, clicca il riquadro e premi i tasti che vuoi
+  (es. Ctrl + Maiusc + Q, Win + Z). Un tasto da solo si attiva tenendolo premuto, con il tempo regolabile.
 
 Gli errori vengono scritti in `%LOCALAPPDATA%\PCAnswerFinder\errori.log`.
 

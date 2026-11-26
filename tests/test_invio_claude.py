@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from PySide6.QtWidgets import QApplication
 
@@ -21,6 +23,12 @@ def test_appunti_ripristinati_se_eccezione(app, monkeypatch):
     appunti.metti_testo("originale")
     messaggi = []
     invio_claude.invia(b"png", "t", messaggi.append)
+    # gli appunti di Windows sono condivisi (cronologia, altri programmi): si lascia un attimo per aggiornarsi
+    for _ in range(20):
+        QApplication.processEvents()
+        if QApplication.clipboard().text() == "originale":
+            break
+        time.sleep(0.05)
     assert QApplication.clipboard().text() == "originale"
     assert messaggi and messaggi[0].startswith("Errore durante l'invio:")
 

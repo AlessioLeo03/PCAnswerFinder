@@ -83,6 +83,15 @@ Macchina a stati in `stato_win.py`:
 Gli eventi reinviati dal programma portano un valore riconoscibile in `dwExtraInfo` e l'hook li ignora.
 Il controllo dei 500 ms usa un timer Qt; l'hook resta veloce (nessun lavoro pesante dentro la callback).
 
+### Scorciatoia personalizzata (versione 1.1)
+
+Dal menu dell'icona, "Scorciatoia…" apre una finestra che registra i tasti premuti con lo stesso hook
+(durante la registrazione nessun tasto arriva alle altre app). Modificatori + un tasto normale = combinazione
+esatta (`StatoCombinazione`: il tasto normale viene bloccato; con Win o Alt si invia il tasto senza funzione
+0xE8 per non aprire Start o i menu). Un solo tasto = "tieni premuto" con soglia 0,2–1,5 s (`StatoWin`
+generalizzato). Combinazioni d'uso comune (Ctrl+C, Alt+F4, una lettera tenuta premuta…) chiedono conferma.
+Salvata in QSettings; predefinita: tieni premuto Win per 0,5 s.
+
 ## 6. Gesti, selezione e messaggio
 
 ### Classificazione del gesto (`gesti.py`)

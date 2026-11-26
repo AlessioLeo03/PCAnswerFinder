@@ -10,7 +10,8 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from cerchia import appunti, cattura, chat_claude, destinazione, elementi, invio_claude
+from cerchia import appunti, cattura, chat_claude, destinazione, elementi, invio_claude, scorciatoia
+from cerchia.finestra_scorciatoia import FinestraScorciatoia
 from cerchia.destinazione import Destinazione
 from cerchia.schermata import Sessione
 from cerchia.tasto_win import TastoWin
@@ -82,26 +83,50 @@ class Programma:
         migra_nome_vecchio()
         destinazione.migra_vecchie_impostazioni()
         self.icona = QSystemTrayIcon(_icona())
-        self.icona.setToolTip(f"{TITOLO} — tieni premuto Win")
         self.menu = QMenu()
         esci = QAction("Esci", self.menu)
         esci.triggered.connect(app.quit)
+        scelta_tasti = QAction("Scorciatoia…", self.menu)
+        scelta_tasti.triggered.connect(self.scegli_scorciatoia)
         avvio_win = QAction("Avvia con Windows", self.menu)
         avvio_win.setCheckable(True)
         avvio_win.setChecked(avvio_automatico_attivo())
         avvio_win.toggled.connect(imposta_avvio_automatico)
+        self.menu.addAction(scelta_tasti)
         self.menu.addAction(avvio_win)
+        self.menu.addSeparator()
         self.menu.addAction(esci)
         self.icona.setContextMenu(self.menu)
         self.icona.show()
+        self._finestra_tasti: FinestraScorciatoia | None = None
         self.tasto = TastoWin()
         self.tasto.avvia.connect(self._apri_differito)
+        self._usa_scorciatoia(scorciatoia.carica())
         self.tasto.attiva()
         app.aboutToQuit.connect(self.tasto.disattiva)
         chat_claude.aggiorna_in_background()
 
     def avvisa(self, testo: str) -> None:
         self.icona.showMessage(TITOLO, testo)
+
+    def _usa_scorciatoia(self, s) -> None:
+        self.tasto.imposta(s)
+        self.icona.setToolTip(f"{TITOLO} — {s.nome()}")
+
+    def scegli_scorciatoia(self) -> None:
+        if self._finestra_tasti is not None:
+            self._finestra_tasti.raise_()
+            self._finestra_tasti.activateWindow()
+            return
+        f = FinestraScorciatoia(self.tasto, scorciatoia.carica(), _icona())
+        f.setAttribute(Qt.WA_DeleteOnClose)
+        f.scelta.connect(self._usa_scorciatoia)
+        f.scelta.connect(lambda s: self.avvisa(f"Nuova scorciatoia: {s.nome()}"))
+        f.finished.connect(lambda _r: setattr(self, "_finestra_tasti", None))
+        self._finestra_tasti = f
+        f.show()
+        f.raise_()
+        f.activateWindow()
 
     def _apri_differito(self) -> None:
         # il lavoro pesante esce dal ciclo del hook di tastiera

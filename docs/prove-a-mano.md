@@ -31,6 +31,14 @@ Avvio: `.\.venv\Scripts\pythonw avvia.pyw` (oppure da "Avvia con Windows").
 - [ ] Appunti ripristinati dopo l'invio.
 - [ ] App di Claude chiusa → si apre e riceve la selezione.
 
+## Scorciatoia personalizzata
+- [ ] Icona > Scorciatoia…: clic sul riquadro, Ctrl + Maiusc + Q, Salva → la combinazione apre lo strato; Q da sola scrive normalmente.
+- [ ] Win + Z come scorciatoia: apre lo strato e al rilascio di Win non si apre Start.
+- [ ] Un solo tasto (es. F9) con 0,8 s: tenuto premuto apre lo strato, premuto breve fa il suo lavoro normale.
+- [ ] Ctrl + C mostra l'avviso e chiede conferma.
+- [ ] Durante la registrazione i tasti premuti non arrivano alle altre finestre; Annulla ferma la registrazione.
+- [ ] Ripristina predefinita torna a "Tieni premuto Win"; la scelta resta dopo il riavvio del programma.
+
 ## Avvio con Windows
 - [ ] Spunta "Avvia con Windows", riavvia il PC: l'icona compare da sola.
 - [ ] Togli la spunta: dopo il riavvio non parte.
