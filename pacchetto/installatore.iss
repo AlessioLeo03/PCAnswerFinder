@@ -60,9 +60,27 @@ Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM {#Exe}"; Flags: runhidden; R
 Type: dirifempty; Name: "{app}"
 
 [Code]
+{ Versione del Microsoft Store: pacchetto registrato come Claude_<versione>_<arch>__<id> }
+function ClaudeStorePresente(): Boolean;
+var
+  Pacchetti: TArrayOfString;
+  I: Integer;
+begin
+  Result := False;
+  if RegGetSubkeyNames(HKCU,
+      'Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppModel\Repository\Packages',
+      Pacchetti) then
+    for I := 0 to GetArrayLength(Pacchetti) - 1 do
+      if Pos('claude_', Lowercase(Pacchetti[I])) = 1 then
+      begin
+        Result := True;
+        Exit;
+      end;
+end;
+
 function ClaudePresente(): Boolean;
 begin
-  Result := FileExists(ExpandConstant('{localappdata}\AnthropicClaude\claude.exe'));
+  Result := FileExists(ExpandConstant('{localappdata}\AnthropicClaude\claude.exe')) or ClaudeStorePresente();
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
