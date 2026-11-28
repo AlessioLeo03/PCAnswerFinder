@@ -3,6 +3,7 @@ import ctypes
 import os
 import subprocess
 import time
+import winreg
 from collections.abc import Callable
 from ctypes import wintypes
 
@@ -55,6 +56,35 @@ def _percorso_processo(hwnd: int) -> str:
         _kernel32.CloseHandle(h)
 
 
+_PACCHETTI = (r"Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion"
+              r"\AppModel\Repository\Packages")
+
+
+def claude_store_installato() -> bool:
+    """True se la versione Microsoft Store di Claude e' registrata per l'utente."""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _PACCHETTI) as chiave:
+            i = 0
+            while True:
+                if winreg.EnumKey(chiave, i).lower().startswith("claude_"):
+                    return True
+                i += 1
+    except OSError:  # chiave assente o fine dell'elenco
+        return False
+
+
+def e_app_claude(percorso: str) -> bool:
+    """True se il percorso e' il claude.exe dell'app desktop di Claude (non quello di Claude Code).
+
+    Riconosce sia l'installer classico (...\\AnthropicClaude\\...) sia la versione
+    del Microsoft Store (...\\WindowsApps\\Claude_<versione>_<arch>__<id>\\app\\Claude.exe).
+    """
+    p = percorso.lower()
+    if not p.endswith("\\claude.exe"):
+        return False
+    return "\\anthropicclaude\\" in p or ("\\windowsapps\\claude_" in p and "\\app\\" in p)
+
+
 def trova_finestra() -> int | None:
     """Finestra principale dell'app desktop di Claude (esclude il claude.exe di Claude Code)."""
     trovate: list[int] = []
@@ -62,8 +92,7 @@ def trova_finestra() -> int | None:
     @_ENUMPROC
     def cb(hwnd, _lparam):
         if _user32.IsWindowVisible(hwnd) and _user32.GetWindowTextLengthW(hwnd) > 0:
-            percorso = _percorso_processo(hwnd).lower()
-            if "\\anthropicclaude\\" in percorso and percorso.endswith("\\claude.exe"):
+            if e_app_claude(_percorso_processo(hwnd)):
                 trovate.append(hwnd)
                 return False
         return True
@@ -113,11 +142,14 @@ def invia(png: bytes, testo: str, avvisa: Callable[[str], None],
     hwnd = trova_finestra()
     if hwnd is None:
         programma = os.path.expandvars(impostazioni.CLAUDE_EXE)
-        if os.path.exists(programma):
-            try:
+        try:
+            if os.path.exists(programma):
                 subprocess.Popen([programma])
-            except OSError:
-                pass
+            elif claude_store_installato():
+                # Versione del Microsoft Store: si avvia dal suo AppUserModelID
+                subprocess.Popen(["explorer.exe", impostazioni.CLAUDE_STORE_APPID])
+        except OSError:
+            pass
         fine = time.monotonic() + 20
         while hwnd is None and time.monotonic() < fine:
             _aspetta(500)

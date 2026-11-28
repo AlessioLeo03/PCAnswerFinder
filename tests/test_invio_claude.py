@@ -75,3 +75,19 @@ def test_cerca_chat_usa_ctrl_k_e_titolo(app, monkeypatch):
     assert eventi == [("tasti", (CTRL, ord("K"))), ("testo", "PCAnswerFinder"), ("tasti", INCOLLA),
                       ("tasti", INVIO), ("immagine",), ("tasti", INCOLLA), ("testo", "domanda"),
                       ("tasti", INCOLLA), ("tasti", INVIO)]
+
+
+@pytest.mark.parametrize("percorso, atteso", [
+    (r"C:\Users\x\AppData\Local\AnthropicClaude\app-1.0\claude.exe", True),
+    (r"C:\Program Files\WindowsApps\Claude_6.28899.6.0_x64__pzs8sxrjxfjjc\app\Claude.exe", True),
+    (r"C:\Users\x\AppData\Roaming\Claude\claude-code\2.1.330\abc\claude.exe", False),
+    (r"C:\Program Files\WindowsApps\Altro_1.0_x64__abc\app\Claude.exe", False),
+    (r"C:\Program Files\WindowsApps\Claude_6.0_x64__abc\app\altro.exe", False),
+    ("", False),
+])
+def test_e_app_claude(percorso, atteso):
+    assert invio_claude.e_app_claude(percorso) is atteso
+
+
+def test_claude_store_installato_e_bool():
+    assert isinstance(invio_claude.claude_store_installato(), bool)
